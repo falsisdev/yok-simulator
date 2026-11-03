@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg190" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f4c5c"/>
+      <stop offset="100%" stop-color="#06283d"/>
+    </linearGradient>
+    <linearGradient id="gold190" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f5cb5c"/>
+      <stop offset="100%" stop-color="#c99700"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="118" fill="url(#bg190)" stroke="url(#gold190)" stroke-width="8"/>
+  <circle cx="128" cy="128" r="102" fill="none" stroke="url(#gold190)" stroke-width="2" stroke-dasharray="6 4"/>
+  <!-- 8-point Seljuk star -->
+  <g transform="translate(128,128)">
+    <rect x="-52" y="-52" width="104" height="104" fill="none" stroke="url(#gold190)" stroke-width="5" rx="6"/>
+    <rect x="-52" y="-52" width="104" height="104" fill="none" stroke="url(#gold190)" stroke-width="5" rx="6" transform="rotate(45)"/>
+    <!-- Open book / crescent motif inside -->
+    <path d="M-28,8 Q-14,-4 0,8 Q14,-4 28,8 L28,-16 Q14,-28 0,-16 Q-14,-28 -28,-16 Z" fill="#ffffff" opacity="0.92"/>
+    <circle cx="0" cy="-30" r="6" fill="url(#gold190)"/>
+    <text x="0" y="34" text-anchor="middle" fill="#f5cb5c" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="18" letter-spacing="1">TİBTÜ</text>
+  </g>
+</svg>

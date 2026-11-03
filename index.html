@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Türkiye yükseköğretim sistemini yeniden tasarlayın: 81 il, 203 üniversite ve 600+ Lisans/Önlisans bölümü için interaktif harita, bölüm açma/kapatma ve senaryo simülasyonu.">
+  <title>YÖK Simülatörü | Türkiye Yükseköğretim ve Bölüm Planlama Platformu</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/m3.css">
+</head>
+
+<body>
+
+  <!-- Background Ambient Glow -->
+  <div class="ambient-glow glow-1" aria-hidden="true"></div>
+  <div class="ambient-glow glow-2" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo-area">
+        <div>
+          <div class="eyebrow">Türkiye'nin Yükseköğretim sistemini kendi ideallerinize göre şekillendirin</div>
+          <h1>Yükseköğretim Simülatörü</h1>
+          <div class="eyebrow"> 81 İL · 203 KURUM · 600+ BÖLÜM</div>
+        </div>
+      </div>
+
+      <!-- Preset Scenarios -->
+      <div class="preset-bar" role="group" aria-label="Hazır Senaryolar">
+        <span class="preset-label">Senaryolar:</span>
+        <button class="preset-chip active" data-preset="all" title="203 üniversitenin tamamını aktif tutar">
+          Tümü Aktif <span class="chip-count">203</span>
+        </button>
+        <button class="preset-chip" data-preset="one_per_city"
+          title="81 ilin her birinde en köklü merkez üniversiteyi korur">
+          İl Başına 1 Köklü <span class="chip-count">81</span>
+        </button>
+        <button class="preset-chip" data-preset="research_only"
+          title="YÖK kapsamındaki 23 Araştırma Üniversitesini (20 Devlet, 3 Vakıf) korur">
+          Araştırma Üni. <span class="chip-count">23</span>
+        </button>
+        <button class="preset-chip" data-preset="pre_1993"
+          title="1992 ve öncesinde kurulmuş 59 köklü üniversiteyi korur">
+          1992 ve Öncesi <span class="chip-count">59</span>
+        </button>
+        <button class="preset-chip" data-preset="tech_research"
+          title="Araştırma üniversiteleri ile teknik ve bilim odaklı kurumları korur">
+          Teknik &amp; Araştırma <span class="chip-count">40</span>
+        </button>
+        <button class="preset-chip" data-preset="state_only" title="Sadece devlet üniversitelerini korur">
+          Sadece Devlet <span class="chip-count">130</span>
+        </button>
+        <button class="preset-chip" data-preset="foundation_only" title="Sadece vakıf üniversitelerini korur">
+          Sadece Vakıf <span class="chip-count">73</span>
+        </button>
+        <button class="preset-chip preset-danger" data-preset="none" title="Tüm üniversiteleri pasif duruma getirir">
+          Sıfırla
+        </button>
+      </div>
+
+      <!-- Utility Actions -->
+      <div class="header-actions">
+        <button id="openDeptReformModalBtn" class="btn btn-primary btn-sm"
+          title="Ulusal Bölüm Reformu Senaryoları ve Yeni Özel Bölüm Tanımlama">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+          <span>Bölüm Reformu &amp; Yeni Bölüm</span>
+        </button>
+        <button id="exportBtn" class="btn btn-secondary btn-sm" title="Mevcut senaryoyu JSON olarak dışa aktar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>Dışa Aktar</span>
+        </button>
+        <button id="themeToggle" class="btn-icon" aria-label="Tema Değiştir" title="Açık / Koyu Tema">
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-container">
+
+    <!-- Top KPI Strip (8 Cards) -->
+    <section class="stats-bar" aria-label="Temel İstatistikler">
+      <div class="stat-card">
+        <div class="stat-top">
+          <span class="stat-label">Toplam Sistem</span>
+          <span class="stat-pill neutral" id="totalCatalogBadge">600 Bölüm</span>
+        </div>
+        <span class="stat-value" id="totalCount">203</span>
+        <div class="stat-sub" id="totalSubText">130 Devlet · 73 Vakıf</div>
+      </div>
+
+      <div class="stat-card stat-kept">
+        <div class="stat-top">
+          <span class="stat-label">Korunan Üni.</span>
+          <span class="stat-pill success" id="keptPercentBadge">100%</span>
+        </div>
+        <span class="stat-value" id="keptCount">203</span>
+        <div class="stat-progress">
+          <div class="stat-progress-bar success" id="keptProgressBar" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-removed">
+        <div class="stat-top">
+          <span class="stat-label">Kaldırılan Üni.</span>
+          <span class="stat-pill danger" id="removedPercentBadge">0%</span>
+        </div>
+        <span class="stat-value" id="removedCount">0</span>
+        <div class="stat-progress">
+          <div class="stat-progress-bar danger" id="removedProgressBar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-depts">
+        <div class="stat-top">
+          <span class="stat-label">Aktif Bölüm Şubesi</span>
+          <span class="stat-pill cyan" id="activeDeptPctBadge">100%</span>
+        </div>
+        <div class="stat-value-row">
+          <span class="stat-value" id="activeDeptBranchesCount">13.053</span>
+          <span class="stat-total-ref" id="baseDeptBranchesRef">/ 13.053</span>
+        </div>
+        <div class="stat-sub" id="deptDeltaSub">0 kapatıldı · +0 yeni açıldı</div>
+      </div>
+
+      <div class="stat-card stat-faculties">
+        <div class="stat-top">
+          <span class="stat-label">Aktif Fakülte &amp; MYO</span>
+          <span class="stat-pill purple" id="activeFacultyPctBadge">100%</span>
+        </div>
+        <div class="stat-value-row">
+          <span class="stat-value" id="activeFacultiesCount">2.875</span>
+          <span class="stat-total-ref" id="baseFacultiesRef">/ 2.875</span>
+        </div>
+        <div class="stat-sub" id="facultyDeltaSub">0 pasif · +0 yeni kurulan</div>
+      </div>
+
+      <div class="stat-card stat-degree">
+        <div class="stat-top">
+          <span class="stat-label">Lisans / Önlisans</span>
+          <span class="stat-pill blue" id="lisansShareBadge">57% Lisans</span>
+        </div>
+        <div class="stat-value-row">
+          <span class="stat-value" id="activeLisansCount">7.410</span>
+          <span class="stat-total-ref" id="activeOnlisansRef">· 5.643 ÖL</span>
+        </div>
+        <div class="stat-sub" id="activeUniqueDeptsSub">600 / 600 farklı bölüm aktif</div>
+      </div>
+
+      <div class="stat-card stat-state">
+        <div class="stat-top">
+          <span class="stat-label">Devlet / Vakıf</span>
+          <span class="stat-pill purple" id="stateShareBadge">64% D</span>
+        </div>
+        <div class="stat-value-row">
+          <span class="stat-value" id="stateCount">130</span>
+          <span class="stat-total-ref" id="foundationCountRef">D · 73 V</span>
+        </div>
+        <div class="stat-sub" id="stateRemovedSub">0 D · 0 V kaldırıldı</div>
+        <span id="foundationCount" class="hidden">73</span>
+        <span id="foundationShareBadge" class="hidden">36%</span>
+        <span id="foundationRemovedSub" class="hidden"></span>
+      </div>
+
+      <div class="stat-card stat-cities">
+        <div class="stat-top">
+          <span class="stat-label">Üniversiteli İl</span>
+          <span class="stat-pill amber" id="emptyCitiesBadge">81 İl Tam</span>
+        </div>
+        <div class="stat-value-row">
+          <span class="stat-value" id="activeCitiesCount">81</span>
+          <span class="stat-total-ref">/ 81</span>
+        </div>
+        <div class="stat-progress">
+          <div class="stat-progress-bar amber" id="cityCoverageBar" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-research">
+        <div class="stat-top">
+          <span class="stat-label">Araştırma Üni.</span>
+          <span class="stat-pill cyan" id="researchPercentBadge">100%</span>
+        </div>
+        <div class="stat-value-row">
+          <span class="stat-value" id="researchCount">23</span>
+          <span class="stat-total-ref">/ 23</span>
+        </div>
+        <div class="stat-sub" id="oldestActiveSub">En köklü: 1453 · Ort. <span id="avgFoundedYear">1983</span></div>
+        <span id="medianYearBadge" class="hidden"></span>
+        <div class="stat-progress hidden">
+          <div class="stat-progress-bar cyan" id="researchProgressBar" style="width: 100%"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Grid -->
+    <div class="content-grid">
+
+      <!-- Sidebar: Dual-Mode (Universities & National Departments) -->
+      <aside class="sidebar" aria-label="Üniversite ve Bölüm Seçim Paneli">
+
+        <!-- Sidebar Mode Switcher -->
+        <div class="sidebar-mode-tabs" role="tablist" aria-label="Görünüm Modu">
+          <button class="sidebar-tab-btn active" data-sidebar-mode="universities" role="tab">
+            <span>Üniversiteler</span>
+            <span class="tab-badge" id="sidebarUniTabCount">203</span>
+          </button>
+          <button class="sidebar-tab-btn" data-sidebar-mode="departments" role="tab">
+            <span>Bölümler (Lisans &amp; Önlisans)</span>
+            <span class="tab-badge" id="sidebarDeptTabCount">600</span>
+          </button>
+        </div>
+
+        <!-- Controls for Universities Mode -->
+        <div class="controls-section" id="uniControlsSection">
+          <div class="search-box">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Üniversite, il, ilçe veya kuruluş yılı ara..."
+              autocomplete="off">
+            <button id="clearSearchBtn" class="clear-search-btn hidden" aria-label="Aramayı Temizle" title="Temizle">
+              &times;
+            </button>
+          </div>
+
+          <div class="filter-stack">
+            <div class="segmented-control" role="radiogroup" aria-label="Üniversite Türü">
+              <button class="segment-btn active" data-filter="all">Tümü</button>
+              <button class="segment-btn" data-filter="Devlet">Devlet</button>
+              <button class="segment-btn" data-filter="Vakıf">Vakıf</button>
+            </div>
+
+            <div class="status-pills" role="radiogroup" aria-label="Aktiflik Durumu">
+              <button class="status-pill active" data-status="all">Tüm Durumlar</button>
+              <button class="status-pill" data-status="kept">Korunanlar</button>
+              <button class="status-pill" data-status="removed">Kaldırılanlar</button>
+            </div>
+
+            <div class="filter-row">
+              <select id="regionFilter" class="select-input" aria-label="Bölge Seçimi">
+                <option value="all">Tüm Bölgeler (7 Bölge)</option>
+                <option value="Marmara">Marmara</option>
+                <option value="İç Anadolu">İç Anadolu</option>
+                <option value="Ege">Ege</option>
+                <option value="Akdeniz">Akdeniz</option>
+                <option value="Karadeniz">Karadeniz</option>
+                <option value="Doğu Anadolu">Doğu Anadolu</option>
+                <option value="Güneydoğu Anadolu">Güneydoğu Anadolu</option>
+              </select>
+
+              <select id="cityFilter" class="select-input" aria-label="İl Seçimi">
+                <option value="all">Tüm İller (81 İl)</option>
+              </select>
+            </div>
+
+            <div class="filter-row">
+              <select id="focusFilter" class="select-input" aria-label="Kurum Profili">
+                <option value="all">Tüm Kurum Profilleri</option>
+                <option value="research">YÖK Araştırma Üni. (23)</option>
+                <option value="Teknik & Bilim">Teknik &amp; Bilim Odaklı</option>
+                <option value="Sağlık & Tıp">Sağlık &amp; Tıp Odaklı</option>
+                <option value="Sanat & Sosyal">Sanat &amp; Sosyal Odaklı</option>
+                <option value="Kapsamlı">Kapsamlı Üniversiteler</option>
+              </select>
+
+              <select id="eraFilter" class="select-input" aria-label="Kuruluş Dönemi">
+                <option value="all">Tüm Dönemler</option>
+                <option value="1933-1981">1453–1981 (Köklü Dönem)</option>
+                <option value="1982-1991">1982–1991 (1. Dalga)</option>
+                <option value="1992-2005">1992–2005 (Büyüme Dönemi)</option>
+                <option value="2006-2010">2006–2010 (Her İle Üni.)</option>
+                <option value="2011+">2011+ (Yeni Nesil)</option>
+              </select>
+            </div>
+
+            <div class="filter-row">
+              <select id="sortOrder" class="select-input" aria-label="Sıralama">
+                <option value="name">Sırala: İsim (A–Z)</option>
+                <option value="city">Sırala: İl (A–Z)</option>
+                <option value="oldest">Sırala: Kuruluş (En Köklüden Yeniye)</option>
+                <option value="newest">Sırala: Kuruluş (Yeniden Eskiye)</option>
+                <option value="depts_desc">Sırala: Aktif Bölüm Sayısı (Çoktan Aza)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active City Filter Pill -->
+          <div id="cityFilterBanner" class="city-filter-banner hidden">
+            <div class="city-banner-info">
+              <span class="city-banner-dot"></span>
+              <span id="cityFilterText">Seçili İl: İstanbul</span>
+            </div>
+            <button id="clearCityFilterBtn" class="city-banner-close" title="İl filtresini kaldır">
+              Tüm İlleri Göster &times;
+            </button>
+          </div>
+
+          <div class="list-meta-bar">
+            <span id="filteredCountText" class="filtered-count">203 kurum listeleniyor</span>
+            <div class="bulk-filter-actions">
+              <button id="keepFilteredBtn" class="text-action-btn success" title="Listelenen tüm kurumları koru">
+                Listeyi Koru
+              </button>
+              <span class="meta-sep">·</span>
+              <button id="removeFilteredBtn" class="text-action-btn danger" title="Listelenen tüm kurumları kaldır">
+                Listeyi Kaldır
+              </button>
+              <span class="meta-sep" id="resetFiltersSep" style="display:none">·</span>
+              <button id="resetFiltersBtn" class="text-action-btn hidden">Filtreleri Temizle</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls for Departments Mode -->
+        <div class="controls-section hidden" id="deptControlsSection">
+          <div class="search-box">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="deptSearchInput" placeholder="Bölüm adı, alan veya puan türü ara..."
+              autocomplete="off">
+            <button id="clearDeptSearchBtn" class="clear-search-btn hidden" aria-label="Aramayı Temizle"
+              title="Temizle">&times;</button>
+          </div>
+
+          <div class="filter-stack">
+            <div class="segmented-control" role="radiogroup" aria-label="Bölüm Derecesi">
+              <button class="dept-degree-btn active" data-degree="all">Tümü (600)</button>
+              <button class="dept-degree-btn" data-degree="Lisans">Lisans (346)</button>
+              <button class="dept-degree-btn" data-degree="Önlisans">Önlisans (254)</button>
+            </div>
+
+            <div class="score-pills" role="radiogroup" aria-label="Puan Türü">
+              <button class="score-pill active" data-score="all">Tümü</button>
+              <button class="score-pill" data-score="SAY">SAY</button>
+              <button class="score-pill" data-score="EA">EA</button>
+              <button class="score-pill" data-score="SÖZ">SÖZ</button>
+              <button class="score-pill" data-score="DİL">DİL</button>
+              <button class="score-pill" data-score="TYT">TYT</button>
+            </div>
+
+            <div class="filter-row">
+              <select id="deptCategoryFilter" class="select-input" aria-label="Akademik Alan">
+                <option value="all">Tüm Alanlar (9 Kategori)</option>
+                <option value="Mühendislik & Mimarlık">Mühendislik &amp; Mimarlık</option>
+                <option value="Sağlık & Tıp Bilimleri">Sağlık &amp; Tıp Bilimleri</option>
+                <option value="Hukuk, İktisat & İdari Bilimler">Hukuk, İktisat &amp; İdari Bilimler</option>
+                <option value="Eğitim & Öğretmenlik">Eğitim &amp; Öğretmenlik</option>
+                <option value="Temel Bilimler & Tarım">Temel Bilimler &amp; Tarım</option>
+                <option value="Sosyal, Beşeri, Dil & Sanat">Sosyal, Beşeri, Dil &amp; Sanat</option>
+                <option value="Teknik & Bilişim (Önlisans)">Teknik &amp; Bilişim (Önlisans)</option>
+                <option value="Sağlık Hizmetleri (Önlisans)">Sağlık Hizmetleri (Önlisans)</option>
+                <option value="Meslek Yüksekokulu (Önlisans)">Meslek Yüksekokulu (Önlisans)</option>
+              </select>
+
+              <select id="deptSortOrder" class="select-input" aria-label="Bölüm Sıralaması">
+                <option value="name">Sırala: Bölüm Adı (A–Z)</option>
+                <option value="most_active">Sırala: En Çok Üniversitede Açık</option>
+                <option value="least_active">Sırala: En Az Üniversitede Açık</option>
+                <option value="most_closed">Sırala: En Çok Kapatılan</option>
+                <option value="most_added">Sırala: En Çok Yeni Açılan</option>
+              </select>
+            </div>
+
+            <button id="openCreateCustomDeptBtn" class="btn btn-create-dept">
+              <span>+ Türkiye'de Olmayan Yeni Özel Bölüm Tanımla</span>
+            </button>
+          </div>
+
+          <div class="list-meta-bar">
+            <span id="filteredDeptCountText" class="filtered-count">600 bölüm listeleniyor</span>
+            <div class="bulk-filter-actions">
+              <button id="resetDeptFiltersBtn" class="text-action-btn hidden">Filtreleri Temizle</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="university-list" id="universityList" role="list">
+          <!-- Populated dynamically via JS (either Universities or Departments) -->
+        </div>
+      </aside>
+
+      <!-- Main Visual Area: Map & Analytics -->
+      <div class="visual-area">
+
+        <!-- Map Card -->
+        <section class="map-card" aria-label="Türkiye Üniversite ve Bölüm Haritası">
+          <div class="map-card-header">
+            <div>
+              <h2 id="mapMainTitle">Türkiye Yükseköğretim Yoğunluk ve Dağılım Haritası</h2>
+              <p class="card-subtitle" id="mapSubTitle">İllere tıklayarak o ildeki kurumları filtreleyebilir veya sol panelden bir bölüme tıklayarak 81 ildeki dağılımını görebilirsiniz.</p>
+            </div>
+            <div class="map-header-controls">
+              <button id="toggleMapLabelsBtn" class="map-label-toggle active"
+                title="İl isim ve sayı etiketlerini göster/gizle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>İl Etiketleri</span>
+              </button>
+              <div class="map-mode-tabs" role="tablist" aria-label="Harita Görünüm Modu">
+                <button class="map-mode-btn active" data-map-mode="count" role="tab">Sayı (Yoğunluk)</button>
+                <button class="map-mode-btn" data-map-mode="type" role="tab">Tür Dağılımı</button>
+                <button class="map-mode-btn" data-map-mode="pruned" role="tab">Kaldırılma Oranı</button>
+                <button class="map-mode-btn" data-map-mode="research" role="tab">Araştırma &amp; Köken</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Department Map Focus Banner -->
+          <div id="mapDeptFocusBanner" class="map-dept-focus-banner hidden">
+            <div class="dept-focus-info">
+              <span class="dept-focus-pulse"></span>
+              <span id="mapDeptFocusText">Bölüm Harita Odağı: Bilgisayar Mühendisliği</span>
+            </div>
+            <div class="dept-focus-actions">
+              <button id="manageFocusedDeptBtn" class="btn-dept-focus-action">Bu Bölümü Üniversitelerde Yönet</button>
+              <button id="clearMapDeptFocusBtn" class="btn-dept-focus-close">Genel Haritaya Dön &times;</button>
+            </div>
+          </div>
+
+          <div class="map-wrapper">
+            <div id="map"></div>
+            <div class="map-overlay-legend" id="mapLegend">
+              <!-- Dynamic Legend populated by map.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Primary Analytics Grid: Regional Breakdown & Institutional Profile -->
+        <section class="charts-section" aria-label="Bölgesel ve Kurumsal Analiz">
+          <!-- Regional Breakdown -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Bölgesel Dağılım Analizi (7 Bölge)</h3>
+                <span class="chart-hint">Bölgeye tıklayarak filtreleyin · Aktif / Toplam Üniversite</span>
+              </div>
+            </div>
+            <div id="regionChart" class="bar-chart"></div>
+          </div>
+
+          <!-- Type Donut & Institutional Focus Profile -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Kurum Türü ve Misyon Profili</h3>
+                <span class="chart-hint">Devlet / Vakıf oranı ve kurumsal uzmanlık alanları</span>
+              </div>
+            </div>
+            <div class="type-distribution" id="typeChart">
+              <div class="donut-chart-container">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="circle-state" id="stateCircle" stroke-dasharray="64, 100"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="donut-center">
+                  <span id="statePercentage">64%</span>
+                  <small>Devlet</small>
+                </div>
+              </div>
+              <div class="legend-panel">
+                <div class="legend-row">
+                  <div class="legend-label-group">
+                    <span class="dot state"></span>
+                    <span>Devlet Üniversitesi</span>
+                  </div>
+                  <strong id="legendStateVal">130 / 130</strong>
+                </div>
+                <div class="legend-row">
+                  <div class="legend-label-group">
+                    <span class="dot foundation"></span>
+                    <span>Vakıf Üniversitesi</span>
+                  </div>
+                  <strong id="legendFoundationVal">73 / 73</strong>
+                </div>
+                <div class="insight-divider"></div>
+                <div class="insight-metrics">
+                  <div class="insight-item">
+                    <span>İl Başına Ort. Üniversite</span>
+                    <strong id="avgPerCityVal">2.51</strong>
+                  </div>
+                  <div class="insight-item">
+                    <span>3 Büyük İl Payı (İst/Ank/İzm)</span>
+                    <strong id="top3ShareVal">44.8% (91)</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="focus-breakdown" id="focusChart">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Department Analytics Section: Academic Fields & Score Type Breakdown -->
+        <section class="charts-section dept-charts-section" aria-label="Bölüm ve Akademik Alan Analizi">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Akademik Alanlara Göre Bölüm Şubeleri (Lisans &amp; Önlisans)</h3>
+                <span class="chart-hint">Alana tıklayarak Bölümler sekmesinde filtreleyin · Aktif / Başlangıç Şube</span>
+              </div>
+            </div>
+            <div id="deptCategoryChart" class="bar-chart"></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Puan Türü Dağılımı ve Bölüm Hareketleri</h3>
+                <span class="chart-hint">SAY · EA · SÖZ · DİL · TYT (Önlisans) aktif şube dağılımı</span>
+              </div>
+            </div>
+            <div id="deptScoreChart" class="bar-chart"></div>
+            <div class="era-summary-footer" id="deptMovementFooter">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Secondary Analytics Grid: Historical Founding Waves & City Ranking Table -->
+        <section class="charts-section secondary-charts" aria-label="Tarihsel Dönemler ve İl Sıralaması">
+          <!-- Historical Expansion Waves -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Tarihsel Kuruluş Dalgaları</h3>
+                <span class="chart-hint">Döneme tıklayarak o dönemde kurulan kurumları inceleyin</span>
+              </div>
+            </div>
+            <div id="eraChart" class="bar-chart era-chart"></div>
+            <div class="era-summary-footer" id="eraSummaryFooter">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <!-- Top Provinces & 81 City Matrix -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>İl Bazlı Üniversite ve Bölüm Sıralaması (81 İl)</h3>
+                <span class="chart-hint">İle tıklayarak haritada ve listede odaklanın</span>
+              </div>
+              <button id="toggleAllCitiesBtn" class="btn-chip-toggle" title="İlk 12 il veya 81 ilin tamamını göster">
+                81 İlin Tamamını Göster
+              </button>
+            </div>
+            <div class="city-ranking-list" id="cityRankingList">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- University Detail & Department Management Modal -->
+  <div id="uniModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content modal-lg">
+      <button class="close-btn" id="closeModalBtn" aria-label="Kapat">&times;</button>
+      <div class="modal-header">
+        <div class="modal-logo-wrap">
+          <img id="modalLogo" src="" alt="" class="modal-logo">
+        </div>
+        <div class="modal-title-area">
+          <div class="modal-badges">
+            <span id="modalType" class="badge">Devlet</span>
+            <span id="modalResearchBadge" class="badge badge-research hidden">Araştırma Üniversitesi</span>
+            <span id="modalFocusBadge" class="badge badge-focus">Kapsamlı</span>
+            <span id="modalStatusBadge" class="badge badge-status">Korunuyor</span>
+          </div>
+          <h2 id="modalTitle">Üniversite Adı</h2>
+          <div class="modal-QuickMeta" id="modalQuickMeta">İstanbul · Kuruluş: 1453</div>
+        </div>
+        <div class="modal-header-actions">
+          <button id="modalToggleStatusBtn" class="btn btn-sm btn-toggle-status">
+            Üniversiteyi Kaldır
+          </button>
+          <a id="modalWebsite" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-secondary">
+            <span>Web Sitesi</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Modal Internal Tabs -->
+      <div class="modal-tabs" role="tablist">
+        <button class="modal-tab-btn active" data-uni-tab="depts" role="tab">
+          Üniversitedeki Bölümler <span class="tab-badge" id="modalUniDeptsCountBadge">0</span>
+        </button>
+        <button class="modal-tab-btn" data-uni-tab="add" role="tab">
+          + Yeni Bölüm Aç (Katalogdan Ekle)
+        </button>
+        <button class="modal-tab-btn" data-uni-tab="info" role="tab">
+          Kurum &amp; İl Bilgisi
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- TAB 1: University's Existing & Added Departments -->
+        <div id="uniModalTabDepts" class="uni-modal-tab-pane">
+          <div class="uni-dept-summary-bar" id="uniDeptSummaryBar">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Faculty View Switcher & Quick Faculty Actions -->
+          <div class="uni-dept-view-switcher">
+            <div class="view-mode-toggles">
+              <button id="uniViewFacultyBtn" class="btn-view-toggle active" data-view="faculty" type="button">
+                <span>Fakülte &amp; MYO Gruplu</span>
+              </button>
+              <button id="uniViewFlatBtn" class="btn-view-toggle" data-view="flat" type="button">
+                <span>Düz Liste</span>
+              </button>
+            </div>
+            <div class="view-faculty-actions">
+              <select id="uniModalFacultyFilter" class="select-input" aria-label="Fakülteye Göre Filtrele">
+                <option value="all">Tüm Fakülte ve Birimler</option>
+              </select>
+              <button id="openNewFacultyPanelBtn" class="btn btn-sm btn-outline-primary" type="button">
+                <span>+ Yeni Fakülte / MYO Kur</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible New Faculty Creator Panel -->
+          <div id="newFacultyPanel" class="new-faculty-panel hidden">
+            <div class="new-faculty-header">
+              <h4>Bu Üniversiteye Yeni Fakülte / Akademik Birim Kur</h4>
+              <button id="closeNewFacultyPanelBtn" class="btn-close-sm" type="button">&times;</button>
+            </div>
+            <div class="new-faculty-form">
+              <div class="form-row flex-grow">
+                <label for="newFacultyNameInput">Fakülte / Birim Adı</label>
+                <input type="text" id="newFacultyNameInput" class="modal-search-input"
+                  placeholder="Örn: Yapay Zeka ve Veri Bilimleri Fakültesi, Siber Güvenlik MYO...">
+              </div>
+              <div class="form-row">
+                <label for="newFacultyTypeSelect">Birim Türü</label>
+                <select id="newFacultyTypeSelect" class="select-input">
+                  <option value="Fakülte">Fakülte</option>
+                  <option value="MYO">Meslek Yüksekokulu (MYO)</option>
+                  <option value="Yüksekokul">Yüksekokul</option>
+                  <option value="Konservatuvar">Konservatuvar</option>
+                  <option value="Enstitü">Enstitü</option>
+                </select>
+              </div>
+              <div class="form-actions-inline">
+                <button id="submitCreateFacultyBtn" class="btn btn-primary" type="button">Fakülteyi Kur</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="uni-dept-controls">
+            <input type="text" id="uniModalDeptSearch" class="modal-search-input"
+              placeholder="Bu üniversitedeki bölümlerde ara..." autocomplete="off">
+            <select id="uniModalDegreeFilter" class="select-input">
+              <option value="all">Tüm Dereceler</option>
+              <option value="Lisans">Sadece Lisans</option>
+              <option value="Önlisans">Sadece Önlisans (MYO)</option>
+            </select>
+            <select id="uniModalScoreFilter" class="select-input">
+              <option value="all">Tüm Puan Türleri</option>
+              <option value="SAY">SAY</option>
+              <option value="EA">EA</option>
+              <option value="SÖZ">SÖZ</option>
+              <option value="DİL">DİL</option>
+              <option value="TYT">TYT</option>
+            </select>
+            <select id="uniModalStatusFilter" class="select-input">
+              <option value="all">Tüm Durumlar</option>
+              <option value="active">Açık (Aktif) Bölümler</option>
+              <option value="closed">Kapatılan Bölümler</option>
+              <option value="added">Yeni Açılan Bölümler</option>
+            </select>
+          </div>
+
+          <div class="uni-dept-bulk-bar">
+            <span id="uniModalFilteredDeptCount" class="filtered-count">0 bölüm gösteriliyor</span>
+            <div class="bulk-filter-actions">
+              <button id="uniModalOpenFilteredDeptsBtn" class="text-action-btn success">Listelenenleri Aç</button>
+              <span class="meta-sep">·</span>
+              <button id="uniModalCloseFilteredDeptsBtn" class="text-action-btn danger">Listelenenleri Kapat</button>
+              <span class="meta-sep">·</span>
+              <button id="uniModalResetDeptsBtn" class="text-action-btn">YÖK Orijinaline Sıfırla</button>
+            </div>
+          </div>
+
+          <div id="uniModalDeptList" class="modal-dept-list">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- TAB 2: Add New Department from Catalog to This University -->
+        <div id="uniModalTabAdd" class="uni-modal-tab-pane hidden">
+          <div class="add-dept-intro">
+            <p>Bu üniversitede hiç açılmamış ancak Türkiye'deki diğer üniversitelerde (veya özel bölüm kataloğunda) yer alan istediğiniz bölümü bu üniversiteye açabilirsiniz.</p>
+          </div>
+
+          <div class="uni-dept-controls">
+            <input type="text" id="uniModalAddSearch" class="modal-search-input"
+              placeholder="Eklenecek bölümü ara (örn. Tıp, Yapay Zeka, Hukuk, İlk ve Acil Yardım)..." autocomplete="off">
+            <select id="uniModalAddTargetFaculty" class="select-input" aria-label="Eklenecek Bölümün Fakültesi">
+              <option value="auto">Hedef Fakülte: Otomatik (En Uygun Birim)</option>
+            </select>
+            <select id="uniModalAddDegreeFilter" class="select-input">
+              <option value="all">Lisans + Önlisans</option>
+              <option value="Lisans">Sadece Lisans</option>
+              <option value="Önlisans">Sadece Önlisans</option>
+            </select>
+            <select id="uniModalAddScoreFilter" class="select-input">
+              <option value="all">Tüm Puanlar</option>
+              <option value="SAY">SAY</option>
+              <option value="EA">EA</option>
+              <option value="SÖZ">SÖZ</option>
+              <option value="DİL">DİL</option>
+              <option value="TYT">TYT</option>
+            </select>
+            <select id="uniModalAddCategoryFilter" class="select-input">
+              <option value="all">Tüm Akademik Alanlar</option>
+              <option value="Mühendislik & Mimarlık">Mühendislik &amp; Mimarlık</option>
+              <option value="Sağlık & Tıp Bilimleri">Sağlık &amp; Tıp Bilimleri</option>
+              <option value="Hukuk, İktisat & İdari Bilimler">Hukuk, İktisat &amp; İdari Bilimler</option>
+              <option value="Eğitim & Öğretmenlik">Eğitim &amp; Öğretmenlik</option>
+              <option value="Temel Bilimler & Tarım">Temel Bilimler &amp; Tarım</option>
+              <option value="Sosyal, Beşeri, Dil & Sanat">Sosyal, Beşeri, Dil &amp; Sanat</option>
+              <option value="Teknik & Bilişim (Önlisans)">Teknik &amp; Bilişim (Önlisans)</option>
+              <option value="Sağlık Hizmetleri (Önlisans)">Sağlık Hizmetleri (Önlisans)</option>
+              <option value="Meslek Yüksekokulu (Önlisans)">Meslek Yüksekokulu (Önlisans)</option>
+            </select>
+          </div>
+
+          <div class="uni-dept-bulk-bar">
+            <span id="uniModalAddAvailableCount" class="filtered-count">0 eklenecek bölüm bulundu</span>
+            <div class="bulk-filter-actions">
+              <button id="uniModalAddAllFilteredBtn" class="text-action-btn success">+ Listelenenlerin Tamamını Bu Üniversiteye Aç</button>
+            </div>
+          </div>
+
+          <div id="uniModalAddDeptList" class="modal-dept-list">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- TAB 3: Institutional Info & Same-City Universities -->
+        <div id="uniModalTabInfo" class="uni-modal-tab-pane hidden">
+          <div class="info-grid">
+            <div class="info-box">
+              <span class="info-label">Şehir / Konum</span>
+              <span id="modalCity" class="info-value">-</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">Coğrafi Bölge</span>
+              <span id="modalRegion" class="info-value">-</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">Kuruluş Yılı</span>
+              <span id="modalFounded" class="info-value">-</span>
+            </div>
+            <div class="info-box">
+              <span class="info-label">İldeki Aktif Kurum</span>
+              <span id="modalCityStats" class="info-value">-</span>
+            </div>
+          </div>
+
+          <div class="modal-same-city-section">
+            <div class="same-city-header">
+              <span id="modalSameCityTitle">Bu İldeki Üniversiteler</span>
+              <button id="modalFilterCityBtn" class="text-action-btn">İli Listede Filtrele &rarr;</button>
+            </div>
+            <div id="modalSameCityList" class="same-city-chips"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- National Department Management Modal (Manage a Single Department Across All 203 Universities) -->
+  <div id="deptModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deptModalTitle">
+    <div class="modal-content modal-lg">
+      <button class="close-btn" id="closeDeptModalBtn" aria-label="Kapat">&times;</button>
+      <div class="modal-header">
+        <div class="modal-title-area">
+          <div class="modal-badges">
+            <span id="deptModalDegreeBadge" class="badge badge-state">Lisans</span>
+            <span id="deptModalScoreBadge" class="badge badge-research">SAY</span>
+            <span id="deptModalCategoryBadge" class="badge badge-focus">Mühendislik &amp; Mimarlık</span>
+          </div>
+          <h2 id="deptModalTitle">Bölüm Adı</h2>
+          <div class="modal-QuickMeta" id="deptModalSubtitle">Türkiye genelinde dağılım ve üniversite atamaları</div>
+        </div>
+        <div class="modal-header-actions">
+          <button id="deptModalFocusMapBtn" class="btn btn-sm btn-primary">
+            <span>Haritada Dağılımı Göster</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="uni-dept-summary-bar" id="deptModalSummaryBar">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Macro Rules for This Specific Department -->
+        <div class="dept-macro-box">
+          <div class="dept-macro-title">Bu Bölüm İçin Hızlı Türkiye Geneli Kurallar:</div>
+          <div class="dept-macro-chips">
+            <button class="macro-action-chip" data-dept-macro="keep_research">Sadece Araştırma Üni.'de (23) Bırak</button>
+            <button class="macro-action-chip" data-dept-macro="keep_pre1993">Sadece 1992 Öncesi Köklü Üni.'de Bırak</button>
+            <button class="macro-action-chip" data-dept-macro="keep_state">Sadece Devlet Üni.'de Bırak</button>
+            <button class="macro-action-chip" data-dept-macro="open_all_research">+ Tüm Araştırma Üni.'lere (23) Aç</button>
+            <button class="macro-action-chip" data-dept-macro="open_all_tech">+ Tüm Teknik &amp; Bilim Üni.'lere (40) Aç</button>
+            <button class="macro-action-chip" data-dept-macro="open_all_state">+ Tüm Devlet Üni.'lere (130) Aç</button>
+            <button class="macro-action-chip danger" data-dept-macro="close_everywhere">Türkiye Genelinde Tamamen Kapat</button>
+            <button class="macro-action-chip" data-dept-macro="reset_dept">YÖK Orijinal Dağılımına Sıfırla</button>
+          </div>
+        </div>
+
+        <div class="uni-dept-controls">
+          <input type="text" id="deptModalUniSearch" class="modal-search-input"
+            placeholder="Üniversite veya şehir ara..." autocomplete="off">
+          <select id="deptModalUniStateFilter" class="select-input">
+            <option value="all">203 Üniversitenin Tamamı</option>
+            <option value="active">Bu Bölümün Açık Olduğu Üniversiteler</option>
+            <option value="closed">Bu Bölümün Kapatıldığı Üniversiteler</option>
+            <option value="added">Bu Bölümün Yeni Açıldığı Üniversiteler</option>
+            <option value="not_present">Bu Bölümün Hiç Olmadığı Üniversiteler (+ Açılabilir)</option>
+          </select>
+          <select id="deptModalUniTypeFilter" class="select-input">
+            <option value="all">Devlet + Vakıf</option>
+            <option value="Devlet">Sadece Devlet</option>
+            <option value="Vakıf">Sadece Vakıf</option>
+            <option value="research">Araştırma Üni. (23)</option>
+          </select>
+        </div>
+
+        <div class="uni-dept-bulk-bar">
+          <span id="deptModalUniCountText" class="filtered-count">203 üniversite listeleniyor</span>
+          <div class="bulk-filter-actions">
+            <button id="deptModalOpenInFilteredBtn" class="text-action-btn success">+ Listelenen Üniversitelerde Bu Bölümü Aç</button>
+            <span class="meta-sep">·</span>
+            <button id="deptModalCloseInFilteredBtn" class="text-action-btn danger">Listelenen Üniversitelerde Kapat</button>
+          </div>
+        </div>
+
+        <div id="deptModalUniList" class="modal-dept-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Macro Department Reform & Custom Department Creator Modal -->
+  <div id="reformModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="reformModalTitle">
+    <div class="modal-content modal-lg">
+      <button class="close-btn" id="closeReformModalBtn" aria-label="Kapat">&times;</button>
+      <div class="modal-header">
+        <div class="modal-title-area">
+          <div class="modal-badges">
+            <span class="badge badge-research">Ulusal Planlama Merkezi</span>
+          </div>
+          <h2 id="reformModalTitle">Bölüm Reformu Senaryoları &amp; Yeni Özel Bölüm Tanımlama</h2>
+          <div class="modal-QuickMeta">Türkiye genelinde makro bölüm politikaları uygulayın veya müfredata yeni bölümler ekleyin</div>
+        </div>
+      </div>
+
+      <div class="modal-tabs" role="tablist">
+        <button class="modal-tab-btn active" data-reform-tab="scenarios" role="tab">
+          Hazır Bölüm Reformu Senaryoları
+        </button>
+        <button class="modal-tab-btn" data-reform-tab="faculties" role="tab">
+          Fakülte &amp; MYO Reformu
+        </button>
+        <button class="modal-tab-btn" data-reform-tab="custom" role="tab">
+          + Türkiye'de Olmayan Yeni Özel Bölüm Oluştur
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- TAB 1: Macro Department Reform Scenarios -->
+        <div id="reformTabScenarios" class="uni-modal-tab-pane">
+          <div class="reform-cards-grid">
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-state">Kalite Konsolidasyonu</span>
+                <h4>Tıp ve Hukuk Sadece Köklü &amp; Araştırma Üniversitelerinde</h4>
+              </div>
+              <p>Tıp ve Hukuk bölümlerini yalnızca 23 Araştırma Üniversitesi ile 1992 ve öncesinde kurulmuş köklü üniversitelerde açık tutar; diğer üniversitelerdeki Tıp ve Hukuk programlarını kapatır.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="med_law_consolidation">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-research">İhtisaslaşma</span>
+                <h4>Teknik Üniversitelerde Saf Mühendislik, Mimarlık &amp; Bilim (SAY)</h4>
+              </div>
+              <p>Teknik ve Bilim üniversitelerindeki SÖZ ve EA puan türlü bölümleri kapatarak bu kurumları tamamen mühendislik, mimarlık ve temel bilimlere odaklandırır.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="tech_pure_say">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-kept">Teknoloji Hamlesi</span>
+                <h4>Yapay Zeka, Yazılım ve Siber Güvenlik Seferberliği</h4>
+              </div>
+              <p>Yapay Zeka Mühendisliği, Yapay Zeka ve Veri Mühendisliği, Yazılım Mühendisliği ve Siber Güvenlik Mühendisliği bölümlerini 23 Araştırma ve 40 Teknik üniversitenin tamamında açar.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="ai_cyber_expansion">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-foundation">Akademik Ayrışma</span>
+                <h4>Araştırma Üniversitelerinde %100 Lisans Modeli (Önlisans Devri)</h4>
+              </div>
+              <p>YÖK'ün 23 Araştırma Üniversitesindeki 2 yıllık Önlisans (TYT) meslek yüksekokulu programlarını kapatarak araştırma üniversitelerini yalnızca Lisans ve Lisansüstü odaklı hale getirir.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="research_lisans_only">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-focus">Kontenjan Dengesi</span>
+                <h4>İlahiyat, İşletme ve İktisat Bölümlerinde Bölgesel Sadeleşme</h4>
+              </div>
+              <p>Her ilde bulunan çoklu İşletme, İktisat ve İlahiyat bölümlerini sadece 1992 öncesi köklü devlet üniversitelerinde ve araştırma üniversitelerinde korur.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="social_consolidation">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-removed">Fabrika Ayarları</span>
+                <h4>Tüm Bölüm Değişikliklerini YÖK Orijinal Durumuna Sıfırla</h4>
+              </div>
+              <p>Kapatılan ve sonradan açılan tüm bölüm değişikliklerini sıfırlayarak 203 üniversitenin tamamını orijinal YÖK Atlas bölüm yapısına geri döndürür.</p>
+              <button class="btn btn-sm btn-secondary" data-macro-scenario="reset_all_depts">Bölümleri Sıfırla</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Create Brand-New Custom Department -->
+        <div id="reformTabCustom" class="uni-modal-tab-pane hidden">
+          <form id="createCustomDeptForm" class="custom-dept-form">
+            <div class="form-row">
+              <label for="customDeptName">Yeni Bölüm Adı</label>
+              <input type="text" id="customDeptName" class="modal-search-input"
+                placeholder="Örn: Kuantum Bilgisayar Mühendisliği, Uzay Madenciliği, İklim Bilimi..." required>
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-row">
+                <label for="customDeptDegree">Öğrenim Derecesi</label>
+                <select id="customDeptDegree" class="select-input">
+                  <option value="Lisans">Lisans (4+ Yıl)</option>
+                  <option value="Önlisans">Önlisans (2 Yıl - MYO)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="customDeptScore">Puan Türü</label>
+                <select id="customDeptScore" class="select-input">
+                  <option value="SAY">SAY (Sayısal)</option>
+                  <option value="EA">EA (Eşit Ağırlık)</option>
+                  <option value="SÖZ">SÖZ (Sözel)</option>
+                  <option value="DİL">DİL (Yabancı Dil)</option>
+                  <option value="TYT">TYT (Önlisans)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="customDeptCategory">Akademik Alan / Kategori</label>
+                <select id="customDeptCategory" class="select-input">
+                  <option value="Mühendislik & Mimarlık">Mühendislik &amp; Mimarlık</option>
+                  <option value="Sağlık & Tıp Bilimleri">Sağlık &amp; Tıp Bilimleri</option>
+                  <option value="Temel Bilimler & Tarım">Temel Bilimler &amp; Tarım</option>
+                  <option value="Hukuk, İktisat & İdari Bilimler">Hukuk, İktisat &amp; İdari Bilimler</option>
+                  <option value="Eğitim & Öğretmenlik">Eğitim &amp; Öğretmenlik</option>
+                  <option value="Sosyal, Beşeri, Dil & Sanat">Sosyal, Beşeri, Dil &amp; Sanat</option>
+                  <option value="Teknik & Bilişim (Önlisans)">Teknik &amp; Bilişim (Önlisans)</option>
+                  <option value="Sağlık Hizmetleri (Önlisans)">Sağlık Hizmetleri (Önlisans)</option>
+                  <option value="Meslek Yüksekokulu (Önlisans)">Meslek Yüksekokulu (Önlisans)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="customDeptTarget">Oluşturulduğunda Hangi Üniversitelere Otomatik Açılsın?</label>
+              <select id="customDeptTarget" class="select-input">
+                <option value="research">YÖK Araştırma Üniversitelerine Aç (23 Kurum)</option>
+                <option value="tech_research">Araştırma ve Teknik Üniversitelere Aç (40 Kurum)</option>
+                <option value="state">Tüm Devlet Üniversitelerine Aç (130 Kurum)</option>
+                <option value="all">203 Üniversitenin Tamamına Aç</option>
+                <option value="none">Şimdilik Sadece Kataloğa Ekle (Üniversiteleri Kendim Seçeceğim)</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">+ Özel Bölümü Oluştur ve Sisteme Ekle</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- TAB 3: Faculty & Unit Organization Reform Scenarios -->
+        <div id="reformTabFaculties" class="uni-modal-tab-pane hidden">
+          <div class="reform-cards-grid">
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-research">Teknik İhtisaslaşma</span>
+                <h4>Teknik Üniversitelerde Fakülte Sadeleşmesi</h4>
+              </div>
+              <p>İTÜ, YTÜ, KTÜ, Gebze Teknik ve diğer teknik üniversitelerdeki İktisadi ve İdari Bilimler, Eğitim, Sanat vb. uyumsuz fakülteleri kapatıp teknik kurumları tamamen Mühendislik, Mimarlık, Denizcilik ve Temel Bilim fakültelerine odaklar.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="tech_faculties_pure">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-kept">Milli Bilişim Seferberliği</span>
+                <h4>Tüm Araştırma Üniversitelerinde 'Yapay Zeka ve Bilişim Fakültesi'</h4>
+              </div>
+              <p>23 Araştırma Üniversitesinin tamamında yeni bir <em>"Yapay Zeka ve Bilişim Teknolojileri Fakültesi"</em> kurar; bu kurumlardaki Bilgisayar, Yapay Zeka, Yazılım ve Siber Güvenlik bölümlerini otomatik olarak bu fakülteye aktarır.</p>
+              <button class="btn btn-sm btn-primary" data-macro-scenario="ai_faculty_initiative">Senaryoyu Uygula</button>
+            </div>
+
+            <div class="reform-scenario-card">
+              <div class="reform-card-top">
+                <span class="badge badge-removed">Fabrika Ayarları</span>
+                <h4>Fakülte ve Bölüm Dağılımlarını YÖK Varsayılanına Sıfırla</h4>
+              </div>
+              <p>Tüm üniversitelerdeki fakülte açma/kapatma, bölüm aktarma ve sonradan kurulan fakülte değişikliklerini sıfırlayarak resmi YÖK Atlas organizasyonuna geri döndürür.</p>
+              <button class="btn btn-sm btn-secondary" data-macro-scenario="reset_all_faculties">Fakülteleri Sıfırla</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <!-- Material 3 Mobile Navigation Bar (Visible on Compact & Medium < 840px) -->
+  <nav class="m3-nav-bar" id="m3NavBar" aria-label="Mobil Gezinme">
+    <button class="m3-nav-item active" data-nav-target="universities" aria-label="Üniversiteler">
+      <div class="m3-nav-icon-container">
+        <span class="material-symbols-rounded">corporate_fare</span>
+      </div>
+      <span class="m3-nav-label">Üniversiteler</span>
+    </button>
+    <button class="m3-nav-item" data-nav-target="departments" aria-label="Bölümler">
+      <div class="m3-nav-icon-container">
+        <span class="material-symbols-rounded">school</span>
+      </div>
+      <span class="m3-nav-label">Bölümler</span>
+    </button>
+    <button class="m3-nav-item" data-nav-target="map" aria-label="Harita">
+      <div class="m3-nav-icon-container">
+        <span class="material-symbols-rounded">map</span>
+      </div>
+      <span class="m3-nav-label">Harita</span>
+    </button>
+    <button class="m3-nav-item" data-nav-target="analytics" aria-label="Analiz & Reform">
+      <div class="m3-nav-icon-container">
+        <span class="material-symbols-rounded">analytics</span>
+      </div>
+      <span class="m3-nav-label">Analiz</span>
+    </button>
+  </nav>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p><strong>İdeal Üniversite Sistemi</strong> — 81 İl, 203 Yükseköğretim Kurumu ve 600+ Lisans/Önlisans Bölümü İçin İnteraktif Planlama ve Simülasyon Platformu.</p>
+      <p class="footer-meta">Üniversite ve bölüm seçimleriniz tarayıcınızda otomatik olarak kaydedilir · YÖK Atlas Verileriyle Hazırlanmıştır</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/turkey-geo.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/departments-data.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
