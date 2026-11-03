@@ -31,13 +31,11 @@ Türkiye'deki tüm yükseköğretim sistemini (81 il, 203 üniversite, binlerce 
 
 ---
 
-## 🚀 Nasıl Çalıştırılır? (Kurulum Gerektirmez)
+## 🚀 Canlı Uygulamaya Erişim
 
-Bu uygulama tamamen tarayıcı üzerinde çalışan modern bir web uygulamasıdır. Herhangi bir sunucu kurulumu veya veritabanı gerektirmez:
+Herhangi bir kurulum veya indirme işlemi gerekmeden doğrudan tarayıcınız üzerinden simülasyonu kullanmaya başlayabilirsiniz:
 
-1. Proje klasörünü bilgisayarınıza indirin.
-2. Klasör içindeki **`index.html`** dosyasına çift tıklayarak herhangi bir internet tarayıcısında (Chrome, Edge, Safari, Brave vb.) açın.
-3. Dilerseniz VS Code kullanıyorsanız *Live Server* eklentisiyle de çalıştırabilirsiniz.
+👉 **[https://falsisdev.github.io/yok_simulator/](https://falsisdev.github.io/yok_simulator/)** adresine tıklayarak hemen erişebilirsiniz.
 
 ---
 
