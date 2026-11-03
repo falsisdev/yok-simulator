@@ -1550,11 +1550,11 @@ h1, h2, h3, h4 {
 .city-rank-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 9px;
-  padding: 0.45rem 0.6rem;
+  padding: 0.5rem 0.65rem;
   cursor: pointer;
   transition: all 0.15s ease;
   min-width: 0;
@@ -1576,11 +1576,18 @@ h1, h2, h3, h4 {
 
 .city-rank-num {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  width: 18px;
-  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .city-rank-main {
@@ -1703,6 +1710,7 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
 }
 
 .close-btn:hover {
