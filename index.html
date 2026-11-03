@@ -595,6 +595,39 @@
                 81 İlin Tamamını Göster
               </button>
             </div>
+            <!-- City Ranking Search and Filters -->
+            <div class="city-ranking-filters">
+              <div class="city-rank-search-box">
+                <svg class="city-rank-search-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="cityRankSearchInput" class="city-rank-search-input" placeholder="İl ara (örn: İzmir, Konya)..." autocomplete="off">
+              </div>
+              <select id="cityRankRegionFilter" class="select-input" aria-label="Bölgeye göre filtrele">
+                <option value="all">Tüm Bölgeler</option>
+                <option value="Marmara">Marmara</option>
+                <option value="İç Anadolu">İç Anadolu</option>
+                <option value="Ege">Ege</option>
+                <option value="Akdeniz">Akdeniz</option>
+                <option value="Karadeniz">Karadeniz</option>
+                <option value="Doğu Anadolu">Doğu Anadolu</option>
+                <option value="Güneydoğu Anadolu">Güneydoğu Anadolu</option>
+              </select>
+              <select id="cityRankStatusFilter" class="select-input" aria-label="Duruma göre filtrele">
+                <option value="all">Tüm Durumlar</option>
+                <option value="has_active">Üniversitesi Olanlar</option>
+                <option value="empty">Üniversitesiz Kalanlar</option>
+                <option value="has_research">Araştırma Üni. Olanlar</option>
+                <option value="has_foundation">Vakıf Üni. Olanlar</option>
+              </select>
+              <select id="cityRankSortOrder" class="select-input" aria-label="Sıralama">
+                <option value="active_desc">Sırala: Aktif Üni (Çoktan Aza)</option>
+                <option value="depts_desc">Sırala: Aktif Bölüm (Çoktan Aza)</option>
+                <option value="name_asc">Sırala: İsim (A–Z)</option>
+                <option value="name_desc">Sırala: İsim (Z–A)</option>
+              </select>
+            </div>
             <div class="city-ranking-list" id="cityRankingList">
               <!-- Populated dynamically via JS -->
             </div>
@@ -874,15 +907,25 @@
         <div class="uni-dept-controls">
           <input type="text" id="deptModalUniSearch" class="modal-search-input"
             placeholder="Üniversite veya şehir ara..." autocomplete="off">
+          <select id="deptModalUniRegionFilter" class="select-input">
+            <option value="all">Tüm Bölgeler</option>
+            <option value="Marmara">Marmara</option>
+            <option value="İç Anadolu">İç Anadolu</option>
+            <option value="Ege">Ege</option>
+            <option value="Akdeniz">Akdeniz</option>
+            <option value="Karadeniz">Karadeniz</option>
+            <option value="Doğu Anadolu">Doğu Anadolu</option>
+            <option value="Güneydoğu Anadolu">Güneydoğu Anadolu</option>
+          </select>
           <select id="deptModalUniStateFilter" class="select-input">
-            <option value="all">203 Üniversitenin Tamamı</option>
+            <option value="all">Tüm Program Durumları</option>
             <option value="active">Bu Bölümün Açık Olduğu Üniversiteler</option>
             <option value="closed">Bu Bölümün Kapatıldığı Üniversiteler</option>
             <option value="added">Bu Bölümün Yeni Açıldığı Üniversiteler</option>
             <option value="not_present">Bu Bölümün Hiç Olmadığı Üniversiteler (+ Açılabilir)</option>
           </select>
           <select id="deptModalUniTypeFilter" class="select-input">
-            <option value="all">Devlet + Vakıf</option>
+            <option value="all">Tüm Kurum Türleri</option>
             <option value="Devlet">Sadece Devlet</option>
             <option value="Vakıf">Sadece Vakıf</option>
             <option value="research">Araştırma Üni. (23)</option>

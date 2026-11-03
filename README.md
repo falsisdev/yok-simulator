@@ -1,4 +1,4 @@
-# 🎓 İdeal Üniversite Simülasyonu
+# 🎓 Yükseköğretim Simülatörü
 
 Türkiye'deki tüm yükseköğretim sistemini (81 il, 203 üniversite, binlerce fakülte ve bölüm) interaktif olarak harita ve grafikler üzerinden keşfedebileceğiniz, kişiselleştirebileceğiniz ve kendi "ideal" üniversite yapınızı kurgulayabileceğiniz simülasyon ve analiz platformu.
 

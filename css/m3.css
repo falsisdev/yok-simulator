@@ -786,7 +786,7 @@ h1, h2, h3, h4 {
 /* City ranking / bar charts */
 .city-rank-row {
   background: transparent !important;
-  border: none !important;
+  border: 1px solid var(--md-outline-variant) !important;
   border-radius: var(--md-shape-md) !important;
 }
 .city-rank-row.selected { background: var(--md-secondary-container) !important; color: var(--md-on-secondary-container); }
@@ -795,7 +795,12 @@ h1, h2, h3, h4 {
   background: var(--md-surface-container-highest) !important;
   color: var(--md-on-surface-variant) !important;
 }
-.city-rank-tag { border-radius: var(--md-shape-xs) !important; }
+.city-rank-name {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--md-on-surface) !important;
+}
+.city-rank-tag { border-radius: var(--md-shape-xs) !important; font-size: 0.65rem !important; }
 
 .bar-item.interactive-row { border-radius: var(--md-shape-sm); }
 .bar-item.selected-row { background: var(--md-secondary-container) !important; }

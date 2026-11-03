@@ -228,6 +228,7 @@ const deptModalSubtitle = document.getElementById('deptModalSubtitle');
 const deptModalFocusMapBtn = document.getElementById('deptModalFocusMapBtn');
 const deptModalSummaryBar = document.getElementById('deptModalSummaryBar');
 const deptModalUniSearch = document.getElementById('deptModalUniSearch');
+const deptModalUniRegionFilter = document.getElementById('deptModalUniRegionFilter');
 const deptModalUniStateFilter = document.getElementById('deptModalUniStateFilter');
 const deptModalUniTypeFilter = document.getElementById('deptModalUniTypeFilter');
 const deptModalUniCountText = document.getElementById('deptModalUniCountText');
@@ -1119,6 +1120,19 @@ function setupEventListeners() {
     });
   }
 
+  // City Ranking Filters Listeners
+  const cityRankSearchInput = document.getElementById('cityRankSearchInput');
+  const cityRankRegionFilter = document.getElementById('cityRankRegionFilter');
+  const cityRankStatusFilter = document.getElementById('cityRankStatusFilter');
+  const cityRankSortOrder = document.getElementById('cityRankSortOrder');
+
+  [cityRankSearchInput, cityRankRegionFilter, cityRankStatusFilter, cityRankSortOrder].forEach(el => {
+    if (!el) return;
+    el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
+      renderCityRanking();
+    });
+  });
+
   // Theme Toggle
   themeToggleBtn.addEventListener('click', () => {
     const html = document.documentElement;
@@ -1322,7 +1336,7 @@ function setupEventListeners() {
     });
   });
 
-  [deptModalUniSearch, deptModalUniStateFilter, deptModalUniTypeFilter].forEach(el => {
+  [deptModalUniSearch, deptModalUniRegionFilter, deptModalUniStateFilter, deptModalUniTypeFilter].forEach(el => {
     if (!el) return;
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
       if (currentModalDeptId !== null) renderDeptModalUniversities(currentModalDeptId);
@@ -2404,14 +2418,26 @@ function renderCityRanking() {
   const container = document.getElementById('cityRankingList');
   if (!container) return;
 
+  const searchInput = document.getElementById('cityRankSearchInput');
+  const regionFilter = document.getElementById('cityRankRegionFilter');
+  const statusFilter = document.getElementById('cityRankStatusFilter');
+  const sortOrder = document.getElementById('cityRankSortOrder');
+
+  const q = (searchInput ? searchInput.value : '').trim().toLocaleLowerCase('tr');
+  const regVal = regionFilter ? regionFilter.value : 'all';
+  const statVal = statusFilter ? statusFilter.value : 'all';
+  const sortVal = sortOrder ? sortOrder.value : 'active_desc';
+
   const cities = getAllUniqueCities();
-  const cityData = cities.map(city => {
+  let cityData = cities.map(city => {
     const cityUnis = universities.filter(u => u.city === city);
     const activeUnis = cityUnis.filter(u => !u.removed);
+    const region = cityUnis[0]?.region || '';
     let activeDepts = 0;
     activeUnis.forEach(u => { activeDepts += getUniDepartmentSummary(u.id).active; });
     return {
       city,
+      region,
       total: cityUnis.length,
       active: activeUnis.length,
       activeDepts,
@@ -2421,14 +2447,43 @@ function renderCityRanking() {
     };
   });
 
-  cityData.sort((a, b) => b.active - a.active || b.activeDepts - a.activeDepts || a.city.localeCompare(b.city, 'tr'));
+  // Filter
+  cityData = cityData.filter(c => {
+    const matchQ = !q || c.city.toLocaleLowerCase('tr').includes(q);
+    const matchReg = regVal === 'all' || c.region === regVal;
+    let matchStat = true;
+    if (statVal === 'has_active') matchStat = c.active > 0;
+    else if (statVal === 'empty') matchStat = c.active === 0;
+    else if (statVal === 'has_research') matchStat = c.research > 0;
+    else if (statVal === 'has_foundation') matchStat = c.foundation > 0;
 
-  const displayed = showAllCitiesInRanking ? cityData : cityData.slice(0, 12);
-  const maxTotal = Math.max(...cityData.map(c => c.total), 1);
+    return matchQ && matchReg && matchStat;
+  });
+
+  // Sort
+  if (sortVal === 'active_desc') {
+    cityData.sort((a, b) => b.active - a.active || b.activeDepts - a.activeDepts || a.city.localeCompare(b.city, 'tr'));
+  } else if (sortVal === 'depts_desc') {
+    cityData.sort((a, b) => b.activeDepts - a.activeDepts || b.active - a.active || a.city.localeCompare(b.city, 'tr'));
+  } else if (sortVal === 'name_asc') {
+    cityData.sort((a, b) => a.city.localeCompare(b.city, 'tr'));
+  } else if (sortVal === 'name_desc') {
+    cityData.sort((a, b) => b.city.localeCompare(a.city, 'tr'));
+  }
+
+  // If user searched or filtered, display all matching items, otherwise respect showAllCitiesInRanking toggle
+  const isFiltered = !!q || regVal !== 'all' || statVal !== 'all';
+  const displayed = (showAllCitiesInRanking || isFiltered) ? cityData : cityData.slice(0, 12);
+  const maxTotal = Math.max(...universities.map(u => 1), 10);
+
+  if (cityData.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1; padding: 1.5rem 0.5rem; text-align: center;"><p>Arama kriterine uygun il bulunamadı.</p></div>`;
+    return;
+  }
 
   container.innerHTML = displayed.map((c, idx) => {
     const isSelected = currentCity && currentCity.toLocaleLowerCase('tr') === c.city.toLocaleLowerCase('tr');
-    const barPct = Math.max(4, Math.round((c.active / maxTotal) * 100));
+    const barPct = Math.max(4, Math.min(100, Math.round((c.active / Math.max(c.total, 1)) * 100)));
     const researchBadge = c.research > 0
       ? `<span class="city-rank-tag research" title="${c.research} Araştırma Üniversitesi">${c.research} Araş.</span>`
       : '';
@@ -2904,6 +2959,7 @@ function closeModal() {
 function openDepartmentModal(deptId) {
   currentModalDeptId = Number(deptId);
   deptModalUniSearch.value = '';
+  if (deptModalUniRegionFilter) deptModalUniRegionFilter.value = 'all';
   deptModalUniStateFilter.value = 'all';
   deptModalUniTypeFilter.value = 'all';
   syncDeptModalState(currentModalDeptId);
@@ -2935,11 +2991,13 @@ function syncDeptModalState(deptId) {
 function getFilteredUniversitiesForDeptModal(deptId) {
   const dId = Number(deptId);
   const q = (deptModalUniSearch ? deptModalUniSearch.value : '').trim().toLocaleLowerCase('tr');
+  const regionFilter = deptModalUniRegionFilter ? deptModalUniRegionFilter.value : 'all';
   const stateFilter = deptModalUniStateFilter ? deptModalUniStateFilter.value : 'all';
   const typeFilter = deptModalUniTypeFilter ? deptModalUniTypeFilter.value : 'all';
 
   return universities.filter(u => {
     const matchQ = !q || u.name.toLocaleLowerCase('tr').includes(q) || u.city.toLocaleLowerCase('tr').includes(q);
+    const matchRegion = regionFilter === 'all' || u.region === regionFilter;
     const matchType = typeFilter === 'all' ||
       (typeFilter === 'research' ? u.isResearch : u.type === typeFilter);
 
@@ -2952,7 +3010,7 @@ function getFilteredUniversitiesForDeptModal(deptId) {
     else if (stateFilter === 'added') matchState = st.isAdded && isEffectivelyActive;
     else if (stateFilter === 'not_present') matchState = !st.isPresent;
 
-    return matchQ && matchType && matchState;
+    return matchQ && matchRegion && matchType && matchState;
   });
 }
 
