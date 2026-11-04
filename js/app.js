@@ -16,6 +16,14 @@ let customFacultiesByUni = new Map();      // uniId -> Array<{ id, name, type, i
 let addedDeptFacultyMap = new Map();       // uniId -> Map(deptId -> facId)
 let uniModalDeptViewMode = 'faculty';      // 'faculty' | 'flat'
 let currentUniModalFacultyFilter = 'all';  // 'all' | facId
+let currentUniModalStatusFilter = 'all';   // 'all' | 'active' | 'closed' | 'added'
+let currentUniModalDeptSort = 'name';
+let currentUniModalAddSort = 'name';
+let currentDeptModalStatusFilter = 'active'; // 'active' | 'all' | 'closed' | 'added' | 'not_present'
+let currentDeptModalCityFilter = 'all';
+let currentDeptModalSort = 'active_first';
+let currentSidebarDeptStatus = 'all';       // 'all' | 'active' | 'closed' | 'added'
+let uniFacultiesCollapsed = false;
 
 // Sidebar & University Filter State
 let sidebarMode = 'universities';  // 'universities' | 'departments'
@@ -190,6 +198,7 @@ const uniModalTabInfo = document.getElementById('uniModalTabInfo');
 const uniViewFacultyBtn = document.getElementById('uniViewFacultyBtn');
 const uniViewFlatBtn = document.getElementById('uniViewFlatBtn');
 const uniModalFacultyFilter = document.getElementById('uniModalFacultyFilter');
+const uniToggleAllFacultiesBtn = document.getElementById('uniToggleAllFacultiesBtn');
 const openNewFacultyPanelBtn = document.getElementById('openNewFacultyPanelBtn');
 const newFacultyPanel = document.getElementById('newFacultyPanel');
 const closeNewFacultyPanelBtn = document.getElementById('closeNewFacultyPanelBtn');
@@ -199,9 +208,16 @@ const submitCreateFacultyBtn = document.getElementById('submitCreateFacultyBtn')
 const uniModalAddTargetFaculty = document.getElementById('uniModalAddTargetFaculty');
 
 const uniDeptSummaryBar = document.getElementById('uniDeptSummaryBar');
+const uniModalDeptStatusPills = document.getElementById('uniModalDeptStatusPills');
+const uniModalPillAllCount = document.getElementById('uniModalPillAllCount');
+const uniModalPillActiveCount = document.getElementById('uniModalPillActiveCount');
+const uniModalPillClosedCount = document.getElementById('uniModalPillClosedCount');
+const uniModalPillAddedCount = document.getElementById('uniModalPillAddedCount');
 const uniModalDeptSearch = document.getElementById('uniModalDeptSearch');
+const clearUniModalDeptSearchBtn = document.getElementById('clearUniModalDeptSearchBtn');
 const uniModalDegreeFilter = document.getElementById('uniModalDegreeFilter');
 const uniModalScoreFilter = document.getElementById('uniModalScoreFilter');
+const uniModalDeptSortOrder = document.getElementById('uniModalDeptSortOrder');
 const uniModalStatusFilter = document.getElementById('uniModalStatusFilter');
 const uniModalFilteredDeptCount = document.getElementById('uniModalFilteredDeptCount');
 const uniModalOpenFilteredDeptsBtn = document.getElementById('uniModalOpenFilteredDeptsBtn');
@@ -210,9 +226,11 @@ const uniModalResetDeptsBtn = document.getElementById('uniModalResetDeptsBtn');
 const uniModalDeptList = document.getElementById('uniModalDeptList');
 
 const uniModalAddSearch = document.getElementById('uniModalAddSearch');
+const clearUniModalAddSearchBtn = document.getElementById('clearUniModalAddSearchBtn');
 const uniModalAddDegreeFilter = document.getElementById('uniModalAddDegreeFilter');
 const uniModalAddScoreFilter = document.getElementById('uniModalAddScoreFilter');
 const uniModalAddCategoryFilter = document.getElementById('uniModalAddCategoryFilter');
+const uniModalAddSortOrder = document.getElementById('uniModalAddSortOrder');
 const uniModalAddAvailableCount = document.getElementById('uniModalAddAvailableCount');
 const uniModalAddAllFilteredBtn = document.getElementById('uniModalAddAllFilteredBtn');
 const uniModalAddDeptList = document.getElementById('uniModalAddDeptList');
@@ -227,14 +245,28 @@ const deptModalTitle = document.getElementById('deptModalTitle');
 const deptModalSubtitle = document.getElementById('deptModalSubtitle');
 const deptModalFocusMapBtn = document.getElementById('deptModalFocusMapBtn');
 const deptModalSummaryBar = document.getElementById('deptModalSummaryBar');
+const deptModalStatusPills = document.getElementById('deptModalStatusPills');
+const deptModalPillActiveCount = document.getElementById('deptModalPillActiveCount');
+const deptModalPillAllCount = document.getElementById('deptModalPillAllCount');
+const deptModalPillClosedCount = document.getElementById('deptModalPillClosedCount');
+const deptModalPillAddedCount = document.getElementById('deptModalPillAddedCount');
+const deptModalPillNotPresentCount = document.getElementById('deptModalPillNotPresentCount');
 const deptModalUniSearch = document.getElementById('deptModalUniSearch');
+const clearDeptModalUniSearchBtn = document.getElementById('clearDeptModalUniSearchBtn');
+const deptModalUniCityFilter = document.getElementById('deptModalUniCityFilter');
 const deptModalUniRegionFilter = document.getElementById('deptModalUniRegionFilter');
-const deptModalUniStateFilter = document.getElementById('deptModalUniStateFilter');
 const deptModalUniTypeFilter = document.getElementById('deptModalUniTypeFilter');
+const deptModalSortOrder = document.getElementById('deptModalSortOrder');
+const deptModalUniStateFilter = document.getElementById('deptModalUniStateFilter');
 const deptModalUniCountText = document.getElementById('deptModalUniCountText');
 const deptModalOpenInFilteredBtn = document.getElementById('deptModalOpenInFilteredBtn');
 const deptModalCloseInFilteredBtn = document.getElementById('deptModalCloseInFilteredBtn');
+const resetDeptModalFiltersBtn = document.getElementById('resetDeptModalFiltersBtn');
+const deptModalResetFilterSep = document.getElementById('deptModalResetFilterSep');
 const deptModalUniList = document.getElementById('deptModalUniList');
+
+// Sidebar Department Filter Controls
+const sidebarDeptStatusPills = document.getElementById('sidebarDeptStatusPills');
 
 // Reform & Custom Department Modal DOM
 const reformModal = document.getElementById('reformModal');
@@ -253,6 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initMap();
   setupEventListeners();
   updateUI();
+  if (window.innerWidth <= 839) {
+    setMobileView('universities');
+  }
 });
 
 function initTheme() {
@@ -823,11 +858,13 @@ function getNationalDepartmentStats(deptId) {
     }
   });
 
+  const totalPresent = activeUniCount + closedUniCount;
   return {
     originalUniCount,
     activeUniCount,
     closedUniCount,
     addedUniCount,
+    notPresentUniCount: Math.max(0, universities.length - totalPresent),
     activeCityCount: activeCities.size
   };
 }
@@ -929,12 +966,7 @@ function setupEventListeners() {
   // Sidebar Mode Tabs (Universities vs Departments)
   sidebarTabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      sidebarTabBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      sidebarMode = btn.getAttribute('data-sidebar-mode');
-      uniControlsSection.classList.toggle('hidden', sidebarMode !== 'universities');
-      deptControlsSection.classList.toggle('hidden', sidebarMode !== 'departments');
-      renderSidebarList();
+      switchSidebarMode(btn.getAttribute('data-sidebar-mode'));
     });
   });
 
@@ -1253,7 +1285,41 @@ function setupEventListeners() {
     });
   }
 
-  [uniModalDeptSearch, uniModalDegreeFilter, uniModalScoreFilter, uniModalStatusFilter].forEach(el => {
+  if (uniToggleAllFacultiesBtn) {
+    uniToggleAllFacultiesBtn.addEventListener('click', () => {
+      const groups = uniModalDeptList.querySelectorAll('.faculty-accordion-group');
+      if (groups.length === 0) return;
+      uniFacultiesCollapsed = !uniFacultiesCollapsed;
+      groups.forEach(g => g.classList.toggle('collapsed', uniFacultiesCollapsed));
+      const span = uniToggleAllFacultiesBtn.querySelector('span');
+      if (span) span.textContent = uniFacultiesCollapsed ? 'Fakülteleri Genişlet' : 'Fakülteleri Daralt';
+    });
+  }
+
+  if (uniModalDeptStatusPills) {
+    uniModalDeptStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        uniModalDeptStatusPills.querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentUniModalStatusFilter = pill.getAttribute('data-uni-dept-status');
+        if (uniModalStatusFilter) uniModalStatusFilter.value = currentUniModalStatusFilter;
+        if (currentModalUniId !== null) renderUniModalDepartments(currentModalUniId);
+      });
+    });
+  }
+
+  if (uniModalDeptSearch && clearUniModalDeptSearchBtn) {
+    uniModalDeptSearch.addEventListener('input', () => {
+      clearUniModalDeptSearchBtn.classList.toggle('hidden', !uniModalDeptSearch.value);
+    });
+    clearUniModalDeptSearchBtn.addEventListener('click', () => {
+      uniModalDeptSearch.value = '';
+      clearUniModalDeptSearchBtn.classList.add('hidden');
+      if (currentModalUniId !== null) renderUniModalDepartments(currentModalUniId);
+    });
+  }
+
+  [uniModalDeptSearch, uniModalDegreeFilter, uniModalScoreFilter, uniModalStatusFilter, uniModalDeptSortOrder].forEach(el => {
     if (!el) return;
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
       if (currentModalUniId !== null) renderUniModalDepartments(currentModalUniId);
@@ -1296,7 +1362,18 @@ function setupEventListeners() {
   });
 
   // University Modal Add-New-Department Tab Filters & Bulk Actions
-  [uniModalAddSearch, uniModalAddDegreeFilter, uniModalAddScoreFilter, uniModalAddCategoryFilter].forEach(el => {
+  if (uniModalAddSearch && clearUniModalAddSearchBtn) {
+    uniModalAddSearch.addEventListener('input', () => {
+      clearUniModalAddSearchBtn.classList.toggle('hidden', !uniModalAddSearch.value);
+    });
+    clearUniModalAddSearchBtn.addEventListener('click', () => {
+      uniModalAddSearch.value = '';
+      clearUniModalAddSearchBtn.classList.add('hidden');
+      if (currentModalUniId !== null) renderUniModalAddCatalog(currentModalUniId);
+    });
+  }
+
+  [uniModalAddSearch, uniModalAddDegreeFilter, uniModalAddScoreFilter, uniModalAddCategoryFilter, uniModalAddSortOrder].forEach(el => {
     if (!el) return;
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
       if (currentModalUniId !== null) renderUniModalAddCatalog(currentModalUniId);
@@ -1328,6 +1405,38 @@ function setupEventListeners() {
     }
   });
 
+  if (deptModalStatusPills) {
+    deptModalStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        setDeptModalStatusFilter(pill.getAttribute('data-dept-status'));
+      });
+    });
+  }
+
+  if (deptModalUniSearch && clearDeptModalUniSearchBtn) {
+    deptModalUniSearch.addEventListener('input', () => {
+      clearDeptModalUniSearchBtn.classList.toggle('hidden', !deptModalUniSearch.value);
+    });
+    clearDeptModalUniSearchBtn.addEventListener('click', () => {
+      deptModalUniSearch.value = '';
+      clearDeptModalUniSearchBtn.classList.add('hidden');
+      if (currentModalDeptId !== null) renderDeptModalUniversities(currentModalDeptId);
+    });
+  }
+
+  if (resetDeptModalFiltersBtn) {
+    resetDeptModalFiltersBtn.addEventListener('click', () => {
+      setDeptModalStatusFilter('active');
+      if (deptModalUniSearch) deptModalUniSearch.value = '';
+      if (clearDeptModalUniSearchBtn) clearDeptModalUniSearchBtn.classList.add('hidden');
+      if (deptModalUniCityFilter) deptModalUniCityFilter.value = 'all';
+      if (deptModalUniRegionFilter) deptModalUniRegionFilter.value = 'all';
+      if (deptModalUniTypeFilter) deptModalUniTypeFilter.value = 'all';
+      if (deptModalSortOrder) deptModalSortOrder.value = 'active_first';
+      if (currentModalDeptId !== null) renderDeptModalUniversities(currentModalDeptId);
+    });
+  }
+
   document.querySelectorAll('[data-dept-macro]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (currentModalDeptId === null) return;
@@ -1336,12 +1445,23 @@ function setupEventListeners() {
     });
   });
 
-  [deptModalUniSearch, deptModalUniRegionFilter, deptModalUniStateFilter, deptModalUniTypeFilter].forEach(el => {
+  [deptModalUniSearch, deptModalUniCityFilter, deptModalUniRegionFilter, deptModalUniStateFilter, deptModalUniTypeFilter, deptModalSortOrder].forEach(el => {
     if (!el) return;
     el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
       if (currentModalDeptId !== null) renderDeptModalUniversities(currentModalDeptId);
     });
   });
+
+  if (sidebarDeptStatusPills) {
+    sidebarDeptStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        sidebarDeptStatusPills.querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentSidebarDeptStatus = pill.getAttribute('data-sidebar-dept-status');
+        renderSidebarList();
+      });
+    });
+  }
 
   deptModalOpenInFilteredBtn.addEventListener('click', () => {
     if (currentModalDeptId === null) return;
@@ -1388,37 +1508,24 @@ function setupEventListeners() {
   m3NavItems.forEach(item => {
     item.addEventListener('click', () => {
       const target = item.getAttribute('data-nav-target');
-      m3NavItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-
-      if (target === 'universities') {
-        const uTab = document.querySelector('[data-sidebar-mode="universities"]');
-        if (uTab) uTab.click();
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (target === 'departments') {
-        const dTab = document.querySelector('[data-sidebar-mode="departments"]');
-        if (dTab) dTab.click();
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (target === 'map') {
-        const mapSection = document.querySelector('.map-wrapper') || document.querySelector('.main-content');
-        if (mapSection) {
-          mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        setTimeout(() => {
-          if (typeof map !== 'undefined' && map && typeof map.invalidateSize === 'function') {
-            map.invalidateSize();
-          }
-        }, 300);
-      } else if (target === 'analytics') {
-        const statsSection = document.querySelector('.stats-grid') || document.querySelector('.charts-panel');
-        if (statsSection) {
-          statsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
+      setMobileView(target);
     });
   });
+
+  const viewCityUnisOnMobileBtn = document.getElementById('viewCityUnisOnMobileBtn');
+  if (viewCityUnisOnMobileBtn) {
+    viewCityUnisOnMobileBtn.addEventListener('click', () => {
+      setMobileView('universities');
+    });
+  }
+
+  const closeMapMobileCityCardBtn = document.getElementById('closeMapMobileCityCardBtn');
+  if (closeMapMobileCityCardBtn) {
+    closeMapMobileCityCardBtn.addEventListener('click', () => {
+      setCityFilter(null, true);
+      updateMobileCityCard(null);
+    });
+  }
 
   // Material 3 Header Elevation on Scroll
   const headerEl = document.querySelector('.header');
@@ -1431,6 +1538,90 @@ function setupEventListeners() {
       }
     }, { passive: true });
   }
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 840) {
+      document.body.removeAttribute('data-mobile-view');
+    } else {
+      document.body.setAttribute('data-mobile-view', currentMobileView);
+    }
+  });
+}
+
+// Sidebar Mode Switcher (Universities vs Departments)
+function switchSidebarMode(mode, syncMobileNav = true) {
+  sidebarMode = mode || 'universities';
+  sidebarTabBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-sidebar-mode') === sidebarMode));
+  uniControlsSection.classList.toggle('hidden', sidebarMode !== 'universities');
+  deptControlsSection.classList.toggle('hidden', sidebarMode !== 'departments');
+  renderSidebarList();
+
+  if (syncMobileNav && window.innerWidth <= 839) {
+    setMobileView(sidebarMode, false);
+  }
+}
+
+// Mobile View Routing State & Switching
+let currentMobileView = 'universities';
+
+function setMobileView(targetView, syncSidebar = true) {
+  currentMobileView = targetView || 'universities';
+  document.body.setAttribute('data-mobile-view', currentMobileView);
+
+  const navItems = document.querySelectorAll('.m3-nav-item');
+  navItems.forEach(item => {
+    item.classList.toggle('active', item.getAttribute('data-nav-target') === currentMobileView);
+  });
+
+  if (currentMobileView === 'universities') {
+    if (syncSidebar) switchSidebarMode('universities', false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (currentMobileView === 'departments') {
+    if (syncSidebar) switchSidebarMode('departments', false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (currentMobileView === 'map') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      if (typeof map !== 'undefined' && map && typeof map.invalidateSize === 'function') {
+        map.invalidateSize();
+        if (typeof geojsonLayer !== 'undefined' && geojsonLayer) {
+          map.fitBounds(geojsonLayer.getBounds(), { padding: [10, 10] });
+        }
+      }
+    }, 120);
+  } else if (currentMobileView === 'analytics') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof renderCharts === 'function') {
+      renderCharts();
+    }
+  }
+}
+
+// Floating Mobile City Card for Map View (< 840px)
+function updateMobileCityCard(cityName) {
+  const card = document.getElementById('mapMobileCityCard');
+  if (!card) return;
+
+  if (!cityName) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  const nameEl = document.getElementById('mapMobileCityName');
+  const badgeEl = document.getElementById('mapMobileCityBadge');
+  const bodyEl = document.getElementById('mapMobileCityBody');
+  const cityUnis = universities.filter(u => u.city.toLocaleLowerCase('tr') === cityName.toLocaleLowerCase('tr'));
+  const activeCount = cityUnis.filter(u => !u.removed).length;
+  const removedCount = cityUnis.length - activeCount;
+
+  if (nameEl) nameEl.textContent = cityName;
+  if (badgeEl) badgeEl.textContent = `${cityUnis.length} Üniversite`;
+  if (bodyEl) {
+    const pct = cityUnis.length > 0 ? Math.round((activeCount / cityUnis.length) * 100) : 0;
+    bodyEl.textContent = `${activeCount} Aktif · ${removedCount} Kaldırıldı (%${pct} Korundu)`;
+  }
+
+  card.classList.remove('hidden');
 }
 
 // Map Focus on a Specific Department
@@ -1447,6 +1638,10 @@ function focusDepartmentOnMap(deptId) {
   mapDeptFocusBanner.classList.remove('hidden');
   renderSidebarList();
   showToast(`Harita "${dept.name}" bölümünün dağılımına odaklandı`);
+
+  if (window.innerWidth <= 839) {
+    setMobileView('map');
+  }
 }
 
 function clearDepartmentMapFocus() {
@@ -1460,6 +1655,11 @@ function clearDepartmentMapFocus() {
 // Called from map.js when a province polygon/label is clicked
 function setCityFilterFromMap(cityName) {
   setCityFilter(cityName, false);
+  if (cityName && window.innerWidth <= 839) {
+    updateMobileCityCard(cityName);
+  } else {
+    updateMobileCityCard(null);
+  }
 }
 
 function setCityFilter(cityName, syncToMap = true) {
@@ -1474,8 +1674,12 @@ function setCityFilter(cityName, syncToMap = true) {
     const activeCount = cityUnis.filter(u => !u.removed).length;
     cityFilterText.textContent = `Seçili İl: ${currentCity} (${activeCount} / ${cityUnis.length} Aktif)`;
     cityFilterBanner.classList.remove('hidden');
+    if (window.innerWidth <= 839) {
+      updateMobileCityCard(currentCity);
+    }
   } else {
     cityFilterBanner.classList.add('hidden');
+    updateMobileCityCard(null);
   }
 
   if (syncToMap && typeof setMapSelectedCity === 'function') {
@@ -1645,6 +1849,8 @@ function getFilteredUniversities() {
 
 function getFilteredDepartments() {
   const q = deptSearchQuery;
+  const statsCache = new Map();
+
   let filtered = departmentCatalog.filter(dept => {
     const matchesSearch = !q ||
       dept.name.toLocaleLowerCase('tr').includes(q) ||
@@ -1653,11 +1859,21 @@ function getFilteredDepartments() {
     const matchesDegree = currentDeptDegree === 'all' || dept.degree === currentDeptDegree;
     const matchesScore = currentDeptScore === 'all' || dept.scoreType === currentDeptScore;
     const matchesCategory = currentDeptCategory === 'all' || dept.category === currentDeptCategory;
-    return matchesSearch && matchesDegree && matchesScore && matchesCategory;
+    if (!matchesSearch || !matchesDegree || !matchesScore || !matchesCategory) return false;
+
+    if (currentSidebarDeptStatus !== 'all') {
+      const stats = getNationalDepartmentStats(dept.id);
+      statsCache.set(dept.id, stats);
+      if (currentSidebarDeptStatus === 'active' && stats.activeUniCount === 0) return false;
+      if (currentSidebarDeptStatus === 'closed' && stats.closedUniCount === 0) return false;
+      if (currentSidebarDeptStatus === 'added' && stats.addedUniCount === 0) return false;
+    }
+    return true;
   });
 
-  const statsCache = new Map();
-  filtered.forEach(d => statsCache.set(d.id, getNationalDepartmentStats(d.id)));
+  filtered.forEach(d => {
+    if (!statsCache.has(d.id)) statsCache.set(d.id, getNationalDepartmentStats(d.id));
+  });
 
   filtered.sort((a, b) => {
     if (currentDeptSort === 'name') {
@@ -2585,11 +2801,22 @@ function syncModalState(uni) {
     modalUniDeptsCountBadge.textContent = `${uni.removed ? 0 : deptSum.active}/${deptSum.total}`;
   }
 
+  if (uniModalPillAllCount) uniModalPillAllCount.textContent = deptSum.total;
+  if (uniModalPillActiveCount) uniModalPillActiveCount.textContent = uni.removed ? 0 : deptSum.active;
+  if (uniModalPillClosedCount) uniModalPillClosedCount.textContent = deptSum.closed;
+  if (uniModalPillAddedCount) uniModalPillAddedCount.textContent = `+${deptSum.addedActive}`;
+
+  if (uniModalDeptStatusPills) {
+    uniModalDeptStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-uni-dept-status') === currentUniModalStatusFilter);
+    });
+  }
+
   if (uniDeptSummaryBar) {
     uniDeptSummaryBar.innerHTML = `
-      <div class="dept-sum-item"><span>Aktif Bölüm</span><strong style="color:var(--accent-success)">${uni.removed ? 0 : deptSum.active}</strong></div>
-      <div class="dept-sum-item"><span>Kapatılan</span><strong style="color:var(--accent-danger)">${deptSum.closed}</strong></div>
-      <div class="dept-sum-item"><span>Yeni Açılan</span><strong style="color:var(--accent-cyan)">+${deptSum.addedActive}</strong></div>
+      <div class="dept-sum-item" style="cursor:pointer" onclick="setUniModalDeptStatusFilter('active')" title="Açık bölümleri listele"><span>Aktif Bölüm</span><strong style="color:var(--accent-success)">${uni.removed ? 0 : deptSum.active}</strong></div>
+      <div class="dept-sum-item" style="cursor:pointer" onclick="setUniModalDeptStatusFilter('closed')" title="Kapatılan bölümleri listele"><span>Kapatılan</span><strong style="color:var(--accent-danger)">${deptSum.closed}</strong></div>
+      <div class="dept-sum-item" style="cursor:pointer" onclick="setUniModalDeptStatusFilter('added')" title="Yeni açılan bölümleri listele"><span>Yeni Açılan</span><strong style="color:var(--accent-cyan)">+${deptSum.addedActive}</strong></div>
       <div class="dept-sum-item"><span>Fakülte &amp; MYO</span><strong style="color:var(--accent-purple)">${uni.removed ? 0 : deptSum.activeFaculties} / ${deptSum.totalFaculties} Aktif</strong></div>
       <div class="dept-sum-item"><span>Lisans / Önlisans</span><strong>${deptSum.lisansActive} L · ${deptSum.onlisansActive} ÖL</strong></div>
     `;
@@ -2669,15 +2896,29 @@ function syncModalState(uni) {
   if (currentUniModalTab === 'add') renderUniModalAddCatalog(uni.id);
 }
 
+function setUniModalDeptStatusFilter(status) {
+  currentUniModalStatusFilter = status;
+  if (uniModalStatusFilter) uniModalStatusFilter.value = status;
+  if (uniModalDeptStatusPills) {
+    uniModalDeptStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-uni-dept-status') === status);
+    });
+  }
+  if (currentModalUniId !== null) {
+    renderUniModalDepartments(currentModalUniId);
+  }
+}
+
 function getFilteredUniModalDepartments(uniId) {
   const allDepts = getUniDepartmentList(uniId);
   const q = (uniModalDeptSearch ? uniModalDeptSearch.value : '').trim().toLocaleLowerCase('tr');
   const deg = uniModalDegreeFilter ? uniModalDegreeFilter.value : 'all';
   const sc = uniModalScoreFilter ? uniModalScoreFilter.value : 'all';
-  const st = uniModalStatusFilter ? uniModalStatusFilter.value : 'all';
+  const st = currentUniModalStatusFilter || (uniModalStatusFilter ? uniModalStatusFilter.value : 'all');
   const facFilter = currentUniModalFacultyFilter || 'all';
+  const sort = uniModalDeptSortOrder ? uniModalDeptSortOrder.value : 'name';
 
-  return allDepts.filter(d => {
+  let list = allDepts.filter(d => {
     const matchQ = !q || d.name.toLocaleLowerCase('tr').includes(q) || d.category.toLocaleLowerCase('tr').includes(q);
     const matchDeg = deg === 'all' || d.degree === deg;
     const matchSc = sc === 'all' || d.scoreType === sc;
@@ -2688,6 +2929,27 @@ function getFilteredUniModalDepartments(uniId) {
     const matchFac = facFilter === 'all' || d.effectiveFacultyId === facFilter;
     return matchQ && matchDeg && matchSc && matchSt && matchFac;
   });
+
+  list.sort((a, b) => {
+    if (sort === 'active_first') {
+      if (a.isActive !== b.isActive) return b.isActive ? 1 : -1;
+      return a.name.localeCompare(b.name, 'tr');
+    }
+    if (sort === 'closed_first') {
+      if (a.isClosed !== b.isClosed) return b.isClosed ? 1 : -1;
+      return a.name.localeCompare(b.name, 'tr');
+    }
+    if (sort === 'score') {
+      return a.scoreType.localeCompare(b.scoreType) || a.name.localeCompare(b.name, 'tr');
+    }
+    if (sort === 'degree') {
+      if (a.degree !== b.degree) return a.degree === 'Lisans' ? -1 : 1;
+      return a.name.localeCompare(b.name, 'tr');
+    }
+    return a.name.localeCompare(b.name, 'tr');
+  });
+
+  return list;
 }
 
 function renderUniModalDepartments(uniId) {
@@ -2695,6 +2957,13 @@ function renderUniModalDepartments(uniId) {
   const list = getFilteredUniModalDepartments(uId);
   const allFaculties = getUniFaculties(uId);
   uniModalFilteredDeptCount.textContent = `${list.length} bölüm listeleniyor`;
+
+  // Update toggle all faculties button
+  if (uniToggleAllFacultiesBtn) {
+    const span = uniToggleAllFacultiesBtn.querySelector('span');
+    if (span) span.textContent = uniFacultiesCollapsed ? 'Tüm Fakülteleri Genişlet' : 'Tüm Fakülteleri Daralt';
+    uniToggleAllFacultiesBtn.style.display = uniModalDeptViewMode === 'faculty' ? 'inline-flex' : 'none';
+  }
 
   if (list.length === 0) {
     uniModalDeptList.innerHTML = `<div class="empty-state"><p>Bu filtreye uygun bölüm bulunamadı.</p></div>`;
@@ -2719,9 +2988,10 @@ function renderUniModalDepartments(uniId) {
     });
 
     let html = '';
+    const collapseClass = uniFacultiesCollapsed ? 'collapsed' : '';
     grouped.forEach((deptsInFac, fId) => {
       // If filtering by search/degree/etc., skip empty faculties unless they explicitly match
-      if (deptsInFac.length === 0 && (uniModalDeptSearch.value || uniModalDegreeFilter.value !== 'all' || uniModalScoreFilter.value !== 'all' || uniModalStatusFilter.value !== 'all')) {
+      if (deptsInFac.length === 0 && (uniModalDeptSearch.value || uniModalDegreeFilter.value !== 'all' || uniModalScoreFilter.value !== 'all' || currentUniModalStatusFilter !== 'all')) {
         return;
       }
 
@@ -2731,7 +3001,7 @@ function renderUniModalDepartments(uniId) {
       const typeBadgeClass = f.type === 'MYO' ? 'myo' : (f.isCustom ? 'custom' : '');
 
       html += `
-        <div class="faculty-accordion-group ${!isFacActive ? 'is-closed-faculty' : ''}" data-faculty-id="${f.id}">
+        <div class="faculty-accordion-group ${!isFacActive ? 'is-closed-faculty' : ''} ${collapseClass}" data-faculty-id="${f.id}">
           <div class="faculty-accordion-header" data-fac-toggle-collapse="${f.id}">
             <div class="faculty-title-wrap">
               <span class="faculty-chevron">&#9660;</span>
@@ -2882,8 +3152,9 @@ function getFilteredAddableDepartmentsForUni(uniId) {
   const deg = uniModalAddDegreeFilter ? uniModalAddDegreeFilter.value : 'all';
   const sc = uniModalAddScoreFilter ? uniModalAddScoreFilter.value : 'all';
   const cat = uniModalAddCategoryFilter ? uniModalAddCategoryFilter.value : 'all';
+  const sort = uniModalAddSortOrder ? uniModalAddSortOrder.value : 'name';
 
-  return departmentCatalog.filter(d => {
+  let list = departmentCatalog.filter(d => {
     if (baseSet.has(d.id) || addedSet.has(d.id)) return false;
     const matchQ = !q || d.name.toLocaleLowerCase('tr').includes(q) || d.category.toLocaleLowerCase('tr').includes(q);
     const matchDeg = deg === 'all' || d.degree === deg;
@@ -2891,6 +3162,23 @@ function getFilteredAddableDepartmentsForUni(uniId) {
     const matchCat = cat === 'all' || d.category === cat;
     return matchQ && matchDeg && matchSc && matchCat;
   });
+
+  if (sort === 'popular' || sort === 'rare') {
+    const statsCache = new Map();
+    list.forEach(d => statsCache.set(d.id, getNationalDepartmentStats(d.id).activeUniCount));
+    list.sort((a, b) => {
+      const ca = statsCache.get(a.id) || 0;
+      const cb = statsCache.get(b.id) || 0;
+      if (sort === 'popular') return cb - ca || a.name.localeCompare(b.name, 'tr');
+      return ca - cb || a.name.localeCompare(b.name, 'tr');
+    });
+  } else if (sort === 'score') {
+    list.sort((a, b) => a.scoreType.localeCompare(b.scoreType) || a.name.localeCompare(b.name, 'tr'));
+  } else {
+    list.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  }
+
+  return list;
 }
 
 function renderUniModalAddCatalog(uniId) {
@@ -2956,12 +3244,52 @@ function closeModal() {
 // ============================================================================
 // NATIONAL DEPARTMENT MODAL LOGIC (Manage 1 Department Across All 203 Unis)
 // ============================================================================
+function populateDeptModalCityOptions(deptId) {
+  if (!deptModalUniCityFilter) return;
+  const cities = getAllUniqueCities();
+  const currentVal = currentDeptModalCityFilter || 'all';
+
+  let html = `<option value="all">Tüm İller (81 İl)</option>`;
+  cities.forEach(city => {
+    const cityUnis = universities.filter(u => u.city === city);
+    if (cityUnis.length === 0) return;
+    const activeInCity = cityUnis.filter(u => {
+      const st = getDepartmentStateInUni(u.id, deptId);
+      return st.isActive && !u.removed;
+    }).length;
+    const isSel = currentVal === city ? 'selected' : '';
+    const label = activeInCity > 0 ? `${city} (${activeInCity} Açık / ${cityUnis.length} Üni)` : `${city} (${cityUnis.length} Üni)`;
+    html += `<option value="${city}" ${isSel}>${label}</option>`;
+  });
+  deptModalUniCityFilter.innerHTML = html;
+}
+
+function setDeptModalStatusFilter(st) {
+  currentDeptModalStatusFilter = st;
+  if (deptModalUniStateFilter) deptModalUniStateFilter.value = st;
+  if (deptModalStatusPills) {
+    deptModalStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-dept-status') === st);
+    });
+  }
+  if (currentModalDeptId !== null) {
+    renderDeptModalUniversities(currentModalDeptId);
+  }
+}
+
 function openDepartmentModal(deptId) {
   currentModalDeptId = Number(deptId);
-  deptModalUniSearch.value = '';
+  currentDeptModalStatusFilter = 'active'; // Default to active so user immediately sees open universities!
+  currentDeptModalCityFilter = 'all';
+
+  if (deptModalUniSearch) deptModalUniSearch.value = '';
+  if (clearDeptModalUniSearchBtn) clearDeptModalUniSearchBtn.classList.add('hidden');
+  if (deptModalUniCityFilter) deptModalUniCityFilter.value = 'all';
   if (deptModalUniRegionFilter) deptModalUniRegionFilter.value = 'all';
-  deptModalUniStateFilter.value = 'all';
-  deptModalUniTypeFilter.value = 'all';
+  if (deptModalUniStateFilter) deptModalUniStateFilter.value = 'active';
+  if (deptModalUniTypeFilter) deptModalUniTypeFilter.value = 'all';
+  if (deptModalSortOrder) deptModalSortOrder.value = 'active_first';
+
   syncDeptModalState(currentModalDeptId);
   deptModal.style.display = 'flex';
 }
@@ -2978,28 +3306,54 @@ function syncDeptModalState(deptId) {
   deptModalSubtitle.textContent = `Türkiye genelinde ${stats.activeUniCount} üniversitede ve ${stats.activeCityCount} ilde aktif`;
 
   deptModalSummaryBar.innerHTML = `
-    <div class="dept-sum-item"><span>Aktif Üniversite</span><strong style="color:var(--accent-success)">${stats.activeUniCount} Kurum</strong></div>
-    <div class="dept-sum-item"><span>YÖK Başlangıç</span><strong>${stats.originalUniCount} Kurum</strong></div>
-    <div class="dept-sum-item"><span>Kapatılan</span><strong style="color:var(--accent-danger)">${stats.closedUniCount} Kurum</strong></div>
-    <div class="dept-sum-item"><span>Yeni Açılan</span><strong style="color:var(--accent-cyan)">+${stats.addedUniCount} Kurum</strong></div>
+    <div class="dept-sum-item" style="cursor:pointer" onclick="setDeptModalStatusFilter('active')" title="Sadece açık üniversiteleri listele"><span>Aktif Üniversite</span><strong style="color:var(--accent-success)">${stats.activeUniCount} Kurum</strong></div>
+    <div class="dept-sum-item" style="cursor:pointer" onclick="setDeptModalStatusFilter('all')" title="Tüm üniversiteleri listele"><span>YÖK Başlangıç</span><strong>${stats.originalUniCount} Kurum</strong></div>
+    <div class="dept-sum-item" style="cursor:pointer" onclick="setDeptModalStatusFilter('closed')" title="Kapatılan üniversiteleri listele"><span>Kapatılan</span><strong style="color:var(--accent-danger)">${stats.closedUniCount} Kurum</strong></div>
+    <div class="dept-sum-item" style="cursor:pointer" onclick="setDeptModalStatusFilter('added')" title="Yeni açılan üniversiteleri listele"><span>Yeni Açılan</span><strong style="color:var(--accent-cyan)">+${stats.addedUniCount} Kurum</strong></div>
+    <div class="dept-sum-item" style="cursor:pointer" onclick="setDeptModalStatusFilter('not_present')" title="Bu bölümün olmadığı üniversiteleri listele"><span>Bulunmadığı Üni.</span><strong style="color:var(--text-muted)">${stats.notPresentUniCount} Kurum</strong></div>
     <div class="dept-sum-item"><span>Bulunduğu İl</span><strong>${stats.activeCityCount} / 81 İl</strong></div>
   `;
 
+  // Update pills live counts
+  if (deptModalPillActiveCount) deptModalPillActiveCount.textContent = stats.activeUniCount;
+  if (deptModalPillAllCount) deptModalPillAllCount.textContent = '203';
+  if (deptModalPillClosedCount) deptModalPillClosedCount.textContent = stats.closedUniCount;
+  if (deptModalPillAddedCount) deptModalPillAddedCount.textContent = stats.addedUniCount;
+  if (deptModalPillNotPresentCount) deptModalPillNotPresentCount.textContent = stats.notPresentUniCount;
+
+  if (deptModalStatusPills) {
+    deptModalStatusPills.querySelectorAll('.status-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-dept-status') === currentDeptModalStatusFilter);
+    });
+  }
+
+  populateDeptModalCityOptions(dept.id);
   renderDeptModalUniversities(dept.id);
 }
 
 function getFilteredUniversitiesForDeptModal(deptId) {
   const dId = Number(deptId);
   const q = (deptModalUniSearch ? deptModalUniSearch.value : '').trim().toLocaleLowerCase('tr');
+  const cityFilter = deptModalUniCityFilter ? deptModalUniCityFilter.value : 'all';
   const regionFilter = deptModalUniRegionFilter ? deptModalUniRegionFilter.value : 'all';
-  const stateFilter = deptModalUniStateFilter ? deptModalUniStateFilter.value : 'all';
+  const stateFilter = currentDeptModalStatusFilter || 'active';
   const typeFilter = deptModalUniTypeFilter ? deptModalUniTypeFilter.value : 'all';
+  const sort = deptModalSortOrder ? deptModalSortOrder.value : 'active_first';
 
-  return universities.filter(u => {
+  const hasAnyFilter = q !== '' || cityFilter !== 'all' || regionFilter !== 'all' || typeFilter !== 'all' || stateFilter !== 'active' || sort !== 'active_first';
+  if (resetDeptModalFiltersBtn) resetDeptModalFiltersBtn.classList.toggle('hidden', !hasAnyFilter);
+  if (deptModalResetFilterSep) deptModalResetFilterSep.style.display = hasAnyFilter ? 'inline' : 'none';
+
+  let list = universities.filter(u => {
     const matchQ = !q || u.name.toLocaleLowerCase('tr').includes(q) || u.city.toLocaleLowerCase('tr').includes(q);
+    const matchCity = cityFilter === 'all' || u.city === cityFilter;
     const matchRegion = regionFilter === 'all' || u.region === regionFilter;
-    const matchType = typeFilter === 'all' ||
-      (typeFilter === 'research' ? u.isResearch : u.type === typeFilter);
+
+    let matchType = true;
+    if (typeFilter === 'Devlet') matchType = u.type === 'Devlet';
+    else if (typeFilter === 'Vakıf') matchType = u.type === 'Vakıf';
+    else if (typeFilter === 'research') matchType = Boolean(u.isResearch);
+    else if (typeFilter !== 'all') matchType = u.focus === typeFilter;
 
     const st = getDepartmentStateInUni(u.id, dId);
     const isEffectivelyActive = st.isActive && !u.removed;
@@ -3010,8 +3364,27 @@ function getFilteredUniversitiesForDeptModal(deptId) {
     else if (stateFilter === 'added') matchState = st.isAdded && isEffectivelyActive;
     else if (stateFilter === 'not_present') matchState = !st.isPresent;
 
-    return matchQ && matchRegion && matchType && matchState;
+    return matchQ && matchCity && matchRegion && matchType && matchState;
   });
+
+  list.sort((a, b) => {
+    const sta = getDepartmentStateInUni(a.id, dId);
+    const stb = getDepartmentStateInUni(b.id, dId);
+    const actA = sta.isActive && !a.removed ? 1 : 0;
+    const actB = stb.isActive && !b.removed ? 1 : 0;
+
+    if (sort === 'active_first') {
+      if (actA !== actB) return actB - actA;
+      return a.name.localeCompare(b.name, 'tr');
+    }
+    if (sort === 'name') return a.name.localeCompare(b.name, 'tr');
+    if (sort === 'city') return a.city.localeCompare(b.city, 'tr') || a.name.localeCompare(b.name, 'tr');
+    if (sort === 'oldest') return a.founded - b.founded;
+    if (sort === 'newest') return b.founded - a.founded;
+    return 0;
+  });
+
+  return list;
 }
 
 function renderDeptModalUniversities(deptId) {

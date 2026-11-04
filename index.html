@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#131316">
   <meta name="description"
     content="Türkiye yükseköğretim sistemini yeniden tasarlayın: 81 il, 203 üniversite ve 600+ Lisans/Önlisans bölümü için interaktif harita, bölüm açma/kapatma ve senaryo simülasyonu.">
   <title>YÖK Simülatörü | Türkiye Yükseköğretim ve Bölüm Planlama Platformu</title>
@@ -370,6 +373,13 @@
           </div>
 
           <div class="filter-stack">
+            <div class="status-pills" id="sidebarDeptStatusPills" role="radiogroup" aria-label="Bölüm Açıklık Durumu">
+              <button class="status-pill active" data-sidebar-dept-status="all">Tüm Bölümler</button>
+              <button class="status-pill" data-sidebar-dept-status="active">Açık Olanlar</button>
+              <button class="status-pill" data-sidebar-dept-status="closed">Kapatılanlar</button>
+              <button class="status-pill" data-sidebar-dept-status="added">Yeni Açılanlar</button>
+            </div>
+
             <div class="segmented-control" role="radiogroup" aria-label="Bölüm Derecesi">
               <button class="dept-degree-btn active" data-degree="all">Tümü (600)</button>
               <button class="dept-degree-btn" data-degree="Lisans">Lisans (346)</button>
@@ -470,6 +480,29 @@
             <div id="map"></div>
             <div class="map-overlay-legend" id="mapLegend">
               <!-- Dynamic Legend populated by map.js -->
+            </div>
+
+            <!-- Floating Mobile City Card (Native app tactile preview on mobile) -->
+            <div id="mapMobileCityCard" class="map-mobile-city-card hidden">
+              <div class="map-city-card-header">
+                <div class="map-city-card-title-wrap">
+                  <span class="material-symbols-rounded">location_on</span>
+                  <div>
+                    <h4 id="mapMobileCityName">Ankara</h4>
+                    <span class="map-city-card-badge" id="mapMobileCityBadge">22 Üniversite</span>
+                  </div>
+                </div>
+                <button id="closeMapMobileCityCardBtn" class="map-city-card-close" aria-label="Kapat">&times;</button>
+              </div>
+              <div class="map-city-card-body" id="mapMobileCityBody">
+                19 Aktif · 3 Kaldırıldı · 410 Aktif Bölüm
+              </div>
+              <div class="map-city-card-actions">
+                <button id="viewCityUnisOnMobileBtn" class="btn btn-primary btn-sm btn-block">
+                  <span>Üniversiteleri Listele</span>
+                  <span class="material-symbols-rounded">arrow_forward</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -705,6 +738,9 @@
               <select id="uniModalFacultyFilter" class="select-input" aria-label="Fakülteye Göre Filtrele">
                 <option value="all">Tüm Fakülte ve Birimler</option>
               </select>
+              <button id="uniToggleAllFacultiesBtn" class="btn btn-sm btn-outline-secondary" type="button" title="Tüm fakülteleri daralt veya genişlet">
+                <span>Fakülteleri Daralt</span>
+              </button>
               <button id="openNewFacultyPanelBtn" class="btn btn-sm btn-outline-primary" type="button">
                 <span>+ Yeni Fakülte / MYO Kur</span>
               </button>
@@ -739,9 +775,32 @@
             </div>
           </div>
 
+          <!-- Quick Status Filter Pills with Live Badges -->
+          <div class="modal-status-pills" id="uniModalDeptStatusPills" role="radiogroup" aria-label="Üniversitedeki Bölüm Durumu">
+            <button class="status-pill active" data-uni-dept-status="all">
+              <span>Tüm Bölümler</span>
+              <span class="pill-badge" id="uniModalPillAllCount">0</span>
+            </button>
+            <button class="status-pill" data-uni-dept-status="active">
+              <span>Sadece Açık Olanlar</span>
+              <span class="pill-badge" id="uniModalPillActiveCount">0</span>
+            </button>
+            <button class="status-pill" data-uni-dept-status="closed">
+              <span>Kapatılanlar</span>
+              <span class="pill-badge" id="uniModalPillClosedCount">0</span>
+            </button>
+            <button class="status-pill" data-uni-dept-status="added">
+              <span>Yeni Açılanlar</span>
+              <span class="pill-badge" id="uniModalPillAddedCount">0</span>
+            </button>
+          </div>
+
           <div class="uni-dept-controls">
-            <input type="text" id="uniModalDeptSearch" class="modal-search-input"
-              placeholder="Bu üniversitedeki bölümlerde ara..." autocomplete="off">
+            <div class="search-box modal-search-box">
+              <input type="text" id="uniModalDeptSearch" class="modal-search-input"
+                placeholder="Bu üniversitedeki bölümlerde ara..." autocomplete="off">
+              <button id="clearUniModalDeptSearchBtn" class="clear-search-btn hidden" aria-label="Aramayı Temizle" title="Temizle">&times;</button>
+            </div>
             <select id="uniModalDegreeFilter" class="select-input">
               <option value="all">Tüm Dereceler</option>
               <option value="Lisans">Sadece Lisans</option>
@@ -755,8 +814,15 @@
               <option value="DİL">DİL</option>
               <option value="TYT">TYT</option>
             </select>
-            <select id="uniModalStatusFilter" class="select-input">
-              <option value="all">Tüm Durumlar</option>
+            <select id="uniModalDeptSortOrder" class="select-input" aria-label="Bölüm Sıralaması">
+              <option value="name">Sırala: Bölüm Adı (A–Z)</option>
+              <option value="active_first">Sırala: Önce Açık Olanlar</option>
+              <option value="closed_first">Sırala: Önce Kapatılanlar</option>
+              <option value="score">Sırala: Puan Türü (SAY-EA-SÖZ)</option>
+              <option value="degree">Sırala: Lisans &gt; Önlisans</option>
+            </select>
+            <select id="uniModalStatusFilter" class="select-input hidden">
+              <option value="all" selected>Tüm Durumlar</option>
               <option value="active">Açık (Aktif) Bölümler</option>
               <option value="closed">Kapatılan Bölümler</option>
               <option value="added">Yeni Açılan Bölümler</option>
@@ -786,8 +852,11 @@
           </div>
 
           <div class="uni-dept-controls">
-            <input type="text" id="uniModalAddSearch" class="modal-search-input"
-              placeholder="Eklenecek bölümü ara (örn. Tıp, Yapay Zeka, Hukuk, İlk ve Acil Yardım)..." autocomplete="off">
+            <div class="search-box modal-search-box">
+              <input type="text" id="uniModalAddSearch" class="modal-search-input"
+                placeholder="Eklenecek bölümü ara (örn. Tıp, Yapay Zeka, Hukuk, İlk ve Acil Yardım)..." autocomplete="off">
+              <button id="clearUniModalAddSearchBtn" class="clear-search-btn hidden" aria-label="Aramayı Temizle" title="Temizle">&times;</button>
+            </div>
             <select id="uniModalAddTargetFaculty" class="select-input" aria-label="Eklenecek Bölümün Fakültesi">
               <option value="auto">Hedef Fakülte: Otomatik (En Uygun Birim)</option>
             </select>
@@ -815,6 +884,12 @@
               <option value="Teknik & Bilişim (Önlisans)">Teknik &amp; Bilişim (Önlisans)</option>
               <option value="Sağlık Hizmetleri (Önlisans)">Sağlık Hizmetleri (Önlisans)</option>
               <option value="Meslek Yüksekokulu (Önlisans)">Meslek Yüksekokulu (Önlisans)</option>
+            </select>
+            <select id="uniModalAddSortOrder" class="select-input" aria-label="Sıralama">
+              <option value="name">Sırala: Bölüm Adı (A–Z)</option>
+              <option value="popular">Sırala: En Popüler (Çok Açık Olan)</option>
+              <option value="rare">Sırala: En Nadir (Az Açık Olan)</option>
+              <option value="score">Sırala: Puan Türü</option>
             </select>
           </div>
 
@@ -904,10 +979,40 @@
           </div>
         </div>
 
+        <!-- Status Filter Pills with Live Counter Badges -->
+        <div class="modal-status-pills" id="deptModalStatusPills" role="radiogroup" aria-label="Bölüm Açıklık Durumu">
+          <button class="status-pill active" data-dept-status="active" title="Sadece bu bölümün şu an açık ve aktif olduğu üniversiteleri listele">
+            <span>Açık Olan Üniversiteler</span>
+            <span class="pill-badge" id="deptModalPillActiveCount">0</span>
+          </button>
+          <button class="status-pill" data-dept-status="all" title="Tüm 203 üniversiteyi listele">
+            <span>Tüm Üniversiteler</span>
+            <span class="pill-badge" id="deptModalPillAllCount">203</span>
+          </button>
+          <button class="status-pill" data-dept-status="closed" title="Bu bölümün kapatıldığı üniversiteler">
+            <span>Kapatılanlar</span>
+            <span class="pill-badge" id="deptModalPillClosedCount">0</span>
+          </button>
+          <button class="status-pill" data-dept-status="added" title="Bu üniversitede sonradan yeni açılan programlar">
+            <span>Yeni Açılanlar</span>
+            <span class="pill-badge" id="deptModalPillAddedCount">0</span>
+          </button>
+          <button class="status-pill" data-dept-status="not_present" title="Bu bölümün hiç bulunmadığı üniversiteler (+ Yeni bölüm açabilirsiniz)">
+            <span>Bölümün Olmadığı Üniversiteler</span>
+            <span class="pill-badge" id="deptModalPillNotPresentCount">0</span>
+          </button>
+        </div>
+
         <div class="uni-dept-controls">
-          <input type="text" id="deptModalUniSearch" class="modal-search-input"
-            placeholder="Üniversite veya şehir ara..." autocomplete="off">
-          <select id="deptModalUniRegionFilter" class="select-input">
+          <div class="search-box modal-search-box">
+            <input type="text" id="deptModalUniSearch" class="modal-search-input"
+              placeholder="Üniversite veya şehir ara..." autocomplete="off">
+            <button id="clearDeptModalUniSearchBtn" class="clear-search-btn hidden" aria-label="Aramayı Temizle" title="Temizle">&times;</button>
+          </div>
+          <select id="deptModalUniCityFilter" class="select-input" aria-label="Şehre Göre Filtrele">
+            <option value="all">Tüm İller (81 İl)</option>
+          </select>
+          <select id="deptModalUniRegionFilter" class="select-input" aria-label="Bölge Seçimi">
             <option value="all">Tüm Bölgeler</option>
             <option value="Marmara">Marmara</option>
             <option value="İç Anadolu">İç Anadolu</option>
@@ -917,27 +1022,39 @@
             <option value="Doğu Anadolu">Doğu Anadolu</option>
             <option value="Güneydoğu Anadolu">Güneydoğu Anadolu</option>
           </select>
-          <select id="deptModalUniStateFilter" class="select-input">
-            <option value="all">Tüm Program Durumları</option>
-            <option value="active">Bu Bölümün Açık Olduğu Üniversiteler</option>
-            <option value="closed">Bu Bölümün Kapatıldığı Üniversiteler</option>
-            <option value="added">Bu Bölümün Yeni Açıldığı Üniversiteler</option>
-            <option value="not_present">Bu Bölümün Hiç Olmadığı Üniversiteler (+ Açılabilir)</option>
-          </select>
-          <select id="deptModalUniTypeFilter" class="select-input">
+          <select id="deptModalUniTypeFilter" class="select-input" aria-label="Kurum Türü / Profili">
             <option value="all">Tüm Kurum Türleri</option>
             <option value="Devlet">Sadece Devlet</option>
             <option value="Vakıf">Sadece Vakıf</option>
             <option value="research">Araştırma Üni. (23)</option>
+            <option value="Teknik & Bilim">Teknik &amp; Bilim Odaklı</option>
+            <option value="Sağlık & Tıp">Sağlık &amp; Tıp Odaklı</option>
+            <option value="Kapsamlı">Kapsamlı Üniversiteler</option>
+          </select>
+          <select id="deptModalSortOrder" class="select-input" aria-label="Sıralama">
+            <option value="active_first">Sırala: Önce Açık Üniversiteler</option>
+            <option value="name">Sırala: Üniversite Adı (A–Z)</option>
+            <option value="city">Sırala: Şehir (A–Z)</option>
+            <option value="oldest">Sırala: Kuruluş (En Köklü)</option>
+            <option value="newest">Sırala: Kuruluş (En Yeni)</option>
+          </select>
+          <select id="deptModalUniStateFilter" class="select-input hidden" aria-label="Durum (Gizli)">
+            <option value="all">Tüm Program Durumları</option>
+            <option value="active" selected>Bu Bölümün Açık Olduğu Üniversiteler</option>
+            <option value="closed">Bu Bölümün Kapatıldığı Üniversiteler</option>
+            <option value="added">Bu Bölümün Yeni Açıldığı Üniversiteler</option>
+            <option value="not_present">Bu Bölümün Hiç Olmadığı Üniversiteler</option>
           </select>
         </div>
 
         <div class="uni-dept-bulk-bar">
-          <span id="deptModalUniCountText" class="filtered-count">203 üniversite listeleniyor</span>
+          <span id="deptModalUniCountText" class="filtered-count">0 üniversite listeleniyor</span>
           <div class="bulk-filter-actions">
             <button id="deptModalOpenInFilteredBtn" class="text-action-btn success">+ Listelenen Üniversitelerde Bu Bölümü Aç</button>
             <span class="meta-sep">·</span>
             <button id="deptModalCloseInFilteredBtn" class="text-action-btn danger">Listelenen Üniversitelerde Kapat</button>
+            <span class="meta-sep" id="deptModalResetFilterSep" style="display:none">·</span>
+            <button id="resetDeptModalFiltersBtn" class="text-action-btn hidden">Filtreleri Temizle</button>
           </div>
         </div>
 
